@@ -12,7 +12,7 @@ class LocalSyncService : Service() {
         if (intent?.action == "SEND_COMMAND") {
             val cmd = intent.getStringExtra("command")
             Log.d("SyncService", "Command received: $cmd")
-            // معالجة الأمر أو إرساله للطفل
+            // هنا يتم معالجة الأمر وإرساله للطفل لاحقاً
         }
         return START_STICKY
     }
