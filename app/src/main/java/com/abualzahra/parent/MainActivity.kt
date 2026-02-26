@@ -1,15 +1,15 @@
 package com.abualzahra.parent
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.appcompat.app.AppCompatActivity
-import android.webkit.JavascriptInterface
-import android.widget.Toast
-import android.content.Intent
-import android.provider.Settings
-import android.net.Uri
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 
 class MainActivity : AppCompatActivity() {
 
@@ -20,26 +20,41 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         webView = findViewById(R.id.webview)
-        
-        // إعدادات الويب
+        setupWebView()
+        checkPermissions()
+    }
+
+    private fun setupWebView() {
         val webSettings: WebSettings = webView.settings
         webSettings.javaScriptEnabled = true
-        webSettings.domStorageEnabled = true // مهم لعمل Firebase
+        webSettings.domStorageEnabled = true
         webSettings.databaseEnabled = true
         webSettings.setSupportZoom(false)
-        
-        // السماح بالوصول من ملفات الأصول (Assets)
         webSettings.allowFileAccess = true
-        
-        // ربط الواجهة الأصلية بالويب (Native Bridge)
-        webView.addJavascriptInterface(WebAppInterface(this), "AndroidNative")
+        webSettings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
 
-        // تحميل الصفحة من مجلد assets
-        webView.setWebViewClient(WebViewClient())
+        // ربط الواجهة الأصلية
+        webView.addJavascriptInterface(WebAppInterface(this), "AndroidNative")
+        webView.webViewClient = WebViewClient()
+
+        // تحميل ملف الـ HTML من مجلد assets
         webView.loadUrl("file:///android_asset/index.html")
     }
 
-    // التعامل مع زر الرجوع
+    private fun checkPermissions() {
+        val permissions = mutableListOf<String>()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                permissions.add(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+        // أضف المزيد من الصلاحيات حسب الحاجة
+        
+        if (permissions.isNotEmpty()) {
+            ActivityCompat.requestPermissions(this, permissions.toTypedArray(), 101)
+        }
+    }
+
     override fun onBackPressed() {
         if (webView.canGoBack()) {
             webView.goBack()
