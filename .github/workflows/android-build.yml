@@ -1,4 +1,4 @@
-name: Android CI Build Professional
+name: Android CI Build Pro
 
 on:
   push:
@@ -19,30 +19,32 @@ jobs:
         distribution: 'temurin'
         cache: gradle
 
-    # خطوة البحث الشامل وحل المشاكل تلقائياً
-    - name: Auto-locate and Fix Gradle
+    - name: Auto-locate and Fix Gradle Environment
       run: |
-        echo "Searching for gradlew..."
-        GRADLEW_PATH=$(find . -name gradlew | head -n 1)
+        # البحث عن ملف build.gradle أولاً لمعرفة أين يقع المشروع الحقيقي
+        BUILD_FILE=$(find . -name build.gradle | head -n 1)
+        PROJECT_ROOT=$(dirname "$BUILD_FILE")
         
-        if [ -z "$GRADLEW_PATH" ]; then
-          echo "Gradlew not found, generating a new one..."
+        echo "Project detected in: $PROJECT_ROOT"
+        
+        # الانتقال لمجلد المشروع وإنشاء ملفات التشغيل إذا كانت ناقصة
+        cd "$PROJECT_ROOT"
+        if [ ! -f gradlew ]; then
           gradle wrapper
-          GRADLEW_PATH="./gradlew"
         fi
+        chmod +x gradlew
         
-        echo "Found gradlew at: $GRADLEW_PATH"
-        chmod +x "$GRADLEW_PATH"
-        # تخزين المسار لاستخدامه في الخطوة التالية
-        echo "GRADLEW_EXEC=$GRADLEW_PATH" >> $GITHUB_ENV
+        # حفظ المسار لاستخدامه
+        echo "FINAL_PATH=$PROJECT_ROOT" >> $GITHUB_ENV
 
-    - name: Build with Gradle
+    - name: Build with Gradle (Smart Task)
       run: |
-        # تشغيل البناء باستخدام المسار الذي تم العثور عليه
-        ${{ env.GRADLEW_EXEC }} assembleDebug
+        cd ${{ env.FINAL_PATH }}
+        # محاولة البناء حتى لو كان المشروع داخل مجلد فرعي
+        ./gradlew assembleDebug --stacktrace
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
-        name: AbuAlZahra-App-Success
-        path: "**/build/outputs/apk/debug/*.apk" # البحث عن الـ APK في أي مكان تم إنتاجه فيه
+        name: AbuAlZahra-App
+        path: "**/build/outputs/apk/debug/*.apk"
