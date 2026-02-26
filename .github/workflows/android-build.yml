@@ -18,6 +18,59 @@ jobs:
         distribution: 'temurin'
         cache: gradle
 
+    # === الحل السحري: إنشاء ملف google-services.json تلقائياً ===
+    - name: Create google-services.json
+      run: |
+        echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > app/google-services.json
+      # ملاحظة: سنستخدم طريقة الكود أدناه لأنها أسهل لك الآن
+
+    # الطريقة البديلة (نسخ محتوى الملف مباشرة في الكود):
+    # استبدل الكود أعلاه بهذا الكود الذي يضع المحتوى مباشرة:
+    - name: Inject Google Services JSON
+      run: |
+        cat > app/google-services.json << 'EOF'
+        {
+          "project_info": {
+            "project_number": "787676787951",
+            "firebase_url": "https://studio-7073076148-6afe0-default-rtdb.firebaseio.com",
+            "project_id": "studio-7073076148-6afe0",
+            "storage_bucket": "studio-7073076148-6afe0.firebasestorage.app"
+          },
+          "client": [
+            {
+              "client_info": {
+                "mobilesdk_app_id": "1:787676787951:android:78bb939f7ab24b0494171a",
+                "android_client_info": {
+                  "package_name": "com.abuzahra.manager"
+                }
+              },
+              "oauth_client": [
+                {
+                  "client_id": "787676787951-20uf0a81hb0n5b95t9htb7cd073lu2bm.apps.googleusercontent.com",
+                  "client_type": 3
+                }
+              ],
+              "api_key": [
+                {
+                  "current_key": "AIzaSyASBVIQ0AvrsLqAgbT9k6L7bCpZKoqdvjo"
+                }
+              ],
+              "services": {
+                "appinvite_service": {
+                  "other_platform_oauth_client": [
+                    {
+                      "client_id": "787676787951-20uf0a81hb0n5b95t9htb7cd073lu2bm.apps.googleusercontent.com",
+                      "client_type": 3
+                    }
+                  ]
+                }
+              }
+            }
+          ],
+          "configuration_version": "1"
+        }
+        EOF
+
     - name: Install Gradle 8.5
       run: |
         curl -L https://services.gradle.org/distributions/gradle-8.5-bin.zip -o gradle-8.5-bin.zip
