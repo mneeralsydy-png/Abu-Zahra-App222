@@ -1,4 +1,4 @@
-name: Android Auto-Repair & Build
+name: Android CI Auto-Fix Final
 
 on:
   push:
@@ -19,19 +19,16 @@ jobs:
         distribution: 'temurin'
         cache: gradle
 
-    - name: Auto-Generate Missing Files
+    - name: Complete Project Reconstruction
       run: |
-        echo "Starting auto-repair for missing or empty files..."
-        
-        # 1. إنشاء مجلد التطبيق إذا لم يكن موجوداً
+        # إنشاء المجلدات الأساسية
         mkdir -p app/src/main/res/values
         mkdir -p app/src/main/java/com/abualzahra/parent
 
-        # 2. بناء ملف settings.gradle (يربط المجلدات ببعضها)
+        # 1. إصلاح ملف settings.gradle
         echo "include ':app'" > settings.gradle
-        echo "rootProject.name = 'AbuAlZahra-App'" >> settings.gradle
 
-        # 3. بناء ملف build.gradle الرئيسي
+        # 2. إصلاح ملف build.gradle (الرئيسي)
         cat <<EOF > build.gradle
         buildscript {
             repositories { google(); mavenCentral() }
@@ -40,7 +37,7 @@ jobs:
         allprojects { repositories { google(); mavenCentral() } }
         EOF
 
-        # 4. بناء ملف app/build.gradle (إعدادات التطبيق)
+        # 3. إصلاح ملف app/build.gradle
         cat <<EOF > app/build.gradle
         plugins { id 'com.android.application' }
         android {
@@ -56,11 +53,18 @@ jobs:
         }
         EOF
 
-        # 5. بناء ملف Manifest (الضروري للتشغيل)
+        # 4. إصلاح ملف strings.xml (لحل مشكلة الصورة الأخيرة)
+        cat <<EOF > app/src/main/res/values/strings.xml
+        <resources>
+            <string name="app_name">AbuAlZahra</string>
+        </resources>
+        EOF
+
+        # 5. إصلاح ملف AndroidManifest.xml
         cat <<EOF > app/src/main/AndroidManifest.xml
         <?xml version="1.0" encoding="utf-8"?>
         <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-            <application android:label="AbuAlZahra">
+            <application android:label="@string/app_name">
                 <activity android:name=".MainActivity" android:exported="true">
                     <intent-filter>
                         <action android:name="android.intent.action.MAIN" />
@@ -71,19 +75,29 @@ jobs:
         </manifest>
         EOF
 
-        # 6. إنشاء ملف MainActivity بسيط لكي لا يفشل البناء
-        echo "package com.abualzahra.parent; import android.os.Bundle; import androidx.appcompat.app.AppCompatActivity; public class MainActivity extends AppCompatActivity { @Override protected void onCreate(Bundle savedInstanceState) { super.onCreate(savedInstanceState); } }" > app/src/main/java/com/abualzahra/parent/MainActivity.kt
+        # 6. إضافة MainActivity بسيطة
+        cat <<EOF > app/src/main/java/com/abualzahra/parent/MainActivity.kt
+        package com.abualzahra.parent
+        import android.os.Bundle
+        import androidx.appcompat.app.AppCompatActivity
+        class MainActivity : AppCompatActivity() {
+            override fun onCreate(savedInstanceState: Bundle?) {
+                super.onCreate(savedInstanceState)
+            }
+        }
+        EOF
 
-        # 7. توليد محرك Gradle (الذي كان يسبب الخطأ في الصورة)
+        # 7. توليد الجرادل
         gradle wrapper
 
-    - name: Grant permissions and Build
+    - name: Execute Build
       run: |
         chmod +x gradlew
         ./gradlew assembleDebug
 
-    - name: Upload APK
+    - name: Upload Finished APK
       uses: actions/upload-artifact@v4
       with:
-        name: AbuAlZahra-Fixed-App
+        name: AbuAlZahra-Final-App
         path: "**/build/outputs/apk/debug/*.apk"
+
