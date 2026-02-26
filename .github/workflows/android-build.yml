@@ -18,16 +18,10 @@ jobs:
         distribution: 'temurin'
         cache: gradle
 
-    # === الحل السحري: إنشاء ملف google-services.json تلقائياً ===
-    - name: Create google-services.json
-      run: |
-        echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > app/google-services.json
-      # ملاحظة: سنستخدم طريقة الكود أدناه لأنها أسهل لك الآن
-
-    # الطريقة البديلة (نسخ محتوى الملف مباشرة في الكود):
-    # استبدل الكود أعلاه بهذا الكود الذي يضع المحتوى مباشرة:
+    # 1. إنشاء ملف google-services.json تلقائياً (حل مشكلة Missing File)
     - name: Inject Google Services JSON
       run: |
+        mkdir -p app
         cat > app/google-services.json << 'EOF'
         {
           "project_info": {
@@ -71,17 +65,16 @@ jobs:
         }
         EOF
 
+    # 2. تثبيت Gradle 8.5 وإضافته للنظام
     - name: Install Gradle 8.5
       run: |
         curl -L https://services.gradle.org/distributions/gradle-8.5-bin.zip -o gradle-8.5-bin.zip
         unzip gradle-8.5-bin.zip
         echo "$PWD/gradle-8.5/bin" >> $GITHUB_PATH
 
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
-      
-    - name: Build with Gradle
-      run: ./gradlew :app:assembleDebug
+    # 3. البناء المباشر باستخدام أمر gradle (بدون الحاجة لملف gradlew)
+    - name: Build Project
+      run: gradle :app:assembleDebug
       
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
