@@ -20,9 +20,17 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    # تعديل مهم: تحديد إصدار Gradle 8.5 بالتحديد لضمان التوافق
-    - name: Setup Gradle Wrapper
-      run: gradle wrapper --gradle-version 8.5
+    # === الحل الجذري ===
+    # نقوم بتحميل وتثبيت Gradle 8.5 يدوياً وإضافته إلى PATH
+    # هذا يتجاوز الإصدار 9.3 الموجود في السيرفر والذي يسبب المشاكل
+    - name: Install Gradle 8.5
+      run: |
+        curl -L https://services.gradle.org/distributions/gradle-8.5-bin.zip -o gradle-8.5-bin.zip
+        unzip gradle-8.5-bin.zip
+        echo "$PWD/gradle-8.5/bin" >> $GITHUB_PATH
+
+    - name: Generate Gradle Wrapper
+      run: gradle wrapper
 
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
