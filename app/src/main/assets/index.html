@@ -21,11 +21,13 @@
         .splash-bg { background: linear-gradient(-45deg, #0f172a, #1e293b, #0f172a, #172554); background-size: 400% 400%; animation: gradientBG 15s ease infinite; }
         @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
         ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: #1E293B; } ::-webkit-scrollbar-thumb { background: #475569; border-radius: 2px; }
+        .perm-btn { transition: all 0.2s; }
+        .perm-btn.active { background-color: #10B981; border-color: #10B981; }
     </style>
 </head>
 <body class="text-gray-200">
 
-    <!-- ==================== 1. شاشة الترحيب (Splash) ==================== -->
+    <!-- 1. شاشة الترحيب -->
     <div id="screen-splash" class="fixed inset-0 z-50 flex flex-col items-center justify-center splash-bg">
         <div class="absolute w-[600px] h-[600px] bg-blue-900 rounded-full filter blur-3xl opacity-20 animate-pulse"></div>
         <div class="relative z-10 text-center fade-in">
@@ -33,17 +35,16 @@
             <p class="text-blue-300 text-lg tracking-widest uppercase mt-2 opacity-80">Parental Control System</p>
             <div class="mt-8">
                 <div class="w-8 h-8 border-4 border-blue-500 border-dashed rounded-full animate-spin mx-auto"></div>
-                <p class="text-gray-500 text-xs mt-2">جاري التحقق من الحساب...</p>
+                <p class="text-gray-500 text-xs mt-2">جاري التحميل...</p>
             </div>
         </div>
     </div>
 
-    <!-- ==================== 2. شاشة تسجيل الدخول / إنشاء الحساب (Auth) ==================== -->
+    <!-- 2. شاشة تسجيل الدخول / إنشاء الحساب -->
     <div id="screen-login" class="fixed inset-0 z-40 hidden flex-col items-center justify-center bg-[#0F172A] p-6">
         <div class="w-full max-w-sm text-center space-y-6">
             <div class="mb-8">
                 <h2 class="text-5xl golden-text-title">Abu Al-Zahra</h2>
-                <!-- يتم تغيير النص ديناميكياً بين "تسجيل الدخول" و "إنشاء حساب" -->
                 <p id="auth-subtitle" class="text-blue-200 text-sm mt-2">تسجيل الدخول للمتابعة</p>
             </div>
             <div class="glass-panel rounded-3xl p-6 space-y-4 border border-white/10 shadow-2xl">
@@ -56,17 +57,12 @@
                         <label class="text-blue-200 text-xs block mb-1">كلمة المرور</label>
                         <input id="pass-input" type="password" class="w-full bg-white/5 border border-white/20 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-blue-400 text-sm" placeholder="********">
                     </div>
-                    <!-- حقل تأكيد كلمة المرور (مخفي افتراضياً) -->
                     <div id="confirm-pass-container" class="hidden">
                         <label class="text-blue-200 text-xs block mb-1">تأكيد كلمة المرور</label>
                         <input id="confirm-pass-input" type="password" class="w-full bg-white/5 border border-white/20 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-blue-400 text-sm" placeholder="********">
                     </div>
                     <p id="error-msg" class="text-red-400 text-xs text-center hidden"></p>
-                    
-                    <!-- زر الدخول / الإنشاء -->
-                    <button onclick="handleAuthAction()" id="btn-auth-action" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-blue-500 transition">
-                        تسجيل الدخول
-                    </button>
+                    <button onclick="handleAuthAction()" id="btn-auth-action" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-blue-500 transition">تسجيل الدخول</button>
                 </div>
                 <div class="flex items-center gap-2 text-blue-300 text-xs">
                     <div class="flex-1 h-[1px] bg-white/20"></div><span>أو</span><div class="flex-1 h-[1px] bg-white/20"></div>
@@ -75,8 +71,6 @@
                     <svg class="w-5 h-5" viewBox="0 0 24 19"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
                     <span>Continue with Google</span>
                 </button>
-
-                <!-- زر التبديل بين إنشاء حساب وتسجيل الدخول -->
                 <div id="toggle-auth-mode" class="text-center text-sm text-gray-400 mt-4 cursor-pointer hover:text-blue-300">
                     ليس لديك حساب؟ <span class="font-bold text-blue-400">إنشاء حساب جديد</span>
                 </div>
@@ -84,23 +78,60 @@
         </div>
     </div>
 
-    <!-- ==================== 3. شاشة الشروط (Terms) ==================== -->
-    <div id="screen-terms" class="fixed inset-0 z-30 hidden flex-col items-center justify-center bg-[#0F172A] p-6">
+    <!-- 3. شاشة إعداد الصلاحيات (Native Setup) -->
+    <div id="screen-permissions" class="fixed inset-0 z-30 hidden flex-col items-center justify-center bg-[#0F172A] p-6">
         <div class="w-full max-w-sm text-center">
-            <div class="w-40 h-40 mx-auto bg-slate-800 rounded-full flex items-center justify-center mb-6 border border-slate-700">
-                <svg class="w-20 h-20 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+            <div class="w-16 h-16 mx-auto bg-blue-600 rounded-full flex items-center justify-center mb-4 shadow-lg">
+                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
             </div>
-            <h2 class="text-2xl text-white font-bold mb-2">أشرف على جهاز الطفل</h2>
-            <p class="text-gray-400 text-sm mb-6 leading-relaxed">
-                يتيح لك هذا التطبيق مراقبة نشاط الطفل لحمايته من المحتوى الضار.
-            </p>
-            <button onclick="acceptTerms()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-blue-500 transition mb-3">موافق</button>
-            <button onclick="rejectTerms()" class="w-full bg-transparent text-gray-400 py-2 font-medium text-sm hover:text-white transition">ليس الآن</button>
+            <h2 class="text-2xl text-white font-bold mb-2">إعداد صلاحيات النظام</h2>
+            <p class="text-gray-400 text-sm mb-6">لعمل التطبيق بكفاءة، يرجى تفعيل الخدمات التالية:</p>
+
+            <div class="space-y-3 text-right mb-6">
+                <!-- زر Accessibility -->
+                <div class="card-dark rounded-xl p-3 flex items-center justify-between">
+                    <div>
+                        <h3 class="text-white font-bold text-sm">خدمة الوصول (Accessibility)</h3>
+                        <p class="text-gray-500 text-xs">مطلوبة لمراقبة التطبيقات</p>
+                    </div>
+                    <button onclick="requestAccessibility()" class="px-3 py-1 bg-slate-700 text-white text-xs rounded-lg border border-slate-600 hover:bg-slate-600">تفعيل</button>
+                </div>
+                
+                <!-- زر Location -->
+                <div class="card-dark rounded-xl p-3 flex items-center justify-between">
+                    <div>
+                        <h3 class="text-white font-bold text-sm">خدمة الموقع (Location)</h3>
+                        <p class="text-gray-500 text-xs">مطلوبة لتتبع الموقع</p>
+                    </div>
+                    <button onclick="requestLocation()" class="px-3 py-1 bg-slate-700 text-white text-xs rounded-lg border border-slate-600 hover:bg-slate-600">تفعيل</button>
+                </div>
+
+                 <!-- زر Overlay -->
+                 <div class="card-dark rounded-xl p-3 flex items-center justify-between">
+                    <div>
+                        <h3 class="text-white font-bold text-sm">الظهور فوق التطبيقات</h3>
+                        <p class="text-gray-500 text-xs">لعرض التنبيهات</p>
+                    </div>
+                    <button onclick="requestOverlay()" class="px-3 py-1 bg-slate-700 text-white text-xs rounded-lg border border-slate-600 hover:bg-slate-600">تفعيل</button>
+                </div>
+            </div>
+
+            <button onclick="finishPermissions()" class="w-full bg-green-600 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-green-500 transition">متابعة للربط</button>
         </div>
     </div>
 
-    <!-- ==================== 4. شاشة الربط (Binding) ==================== -->
-    <div id="screen-binding" class="fixed inset-0 z-20 hidden flex-col items-center justify-center bg-[#0F172A] p-6">
+    <!-- 4. شاشة الشروط -->
+    <div id="screen-terms" class="fixed inset-0 z-20 hidden flex-col items-center justify-center bg-[#0F172A] p-6">
+        <div class="w-full max-w-sm text-center">
+            <h2 class="text-2xl text-white font-bold mb-2">الشروط والأحكام</h2>
+            <p class="text-gray-400 text-sm mb-6 leading-relaxed">يتيح لك هذا التطبيق مراقبة نشاط الطفل لحمايته من المحتوى الضار. بمتابعتك فإنك توافق على الالتزام بالقوانين المحلية.</p>
+            <button onclick="acceptTerms()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-blue-500 transition mb-3">موافق</button>
+            <button onclick="rejectTerms()" class="w-full bg-transparent text-gray-400 py-2 font-medium text-sm hover:text-white transition">رفض</button>
+        </div>
+    </div>
+
+    <!-- 5. شاشة الربط -->
+    <div id="screen-binding" class="fixed inset-0 z-10 hidden flex-col items-center justify-center bg-[#0F172A] p-6">
         <div class="w-full max-w-sm text-center">
             <h2 class="text-2xl text-white font-bold mb-2">اربط جهاز الطفل</h2>
             <p class="text-gray-400 text-sm mb-6">امسح الكود أو أدخل الرقم في تطبيق الطفل</p>
@@ -115,7 +146,7 @@
         </div>
     </div>
 
-    <!-- ==================== 5. الواجهة الرئيسية (Dashboard) ==================== -->
+    <!-- 6. الواجهة الرئيسية -->
     <div id="screen-main" class="hidden fixed inset-0 bg-[#0F172A] flex flex-col overflow-hidden">
         <header class="bg-slate-900/90 backdrop-blur-lg border-b border-slate-700 px-4 py-3 flex justify-between items-center z-20 shrink-0">
             <h1 class="text-xl font-bold text-white tracking-wide">Abu <span class="golden-text-title">Al-Zahra</span></h1>
@@ -176,7 +207,7 @@
         </div>
     </div>
 
-    <!-- Firebase SDKs -->
+    <!-- JavaScript -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -195,10 +226,23 @@
         const auth = getAuth(app);
         const provider = new GoogleAuthProvider();
 
-        // --- Logic Variables ---
         let isLoginMode = true;
 
-        // --- UI Functions ---
+        // --- Native Bridge (Kotlin Connection) ---
+        function callNative(functionName, arg) {
+            if (typeof AndroidNative !== 'undefined') {
+                if (arg) AndroidNative[functionName](arg);
+                else AndroidNative[functionName]();
+            } else {
+                console.log(`Native call (${functionName}) not available in browser.`);
+            }
+        }
+
+        window.requestAccessibility = () => { callNative('openAccessibilitySettings'); }
+        window.requestLocation = () => { callNative('openLocationSettings'); }
+        window.requestOverlay = () => { callNative('openOverlaySettings'); } // You need to add this to Kotlin file if needed
+        
+        // --- UI Logic ---
         function showScreen(id) {
             document.querySelectorAll('[id^="screen-"]').forEach(el => { el.classList.add('hidden'); el.classList.remove('flex'); });
             document.getElementById(id).classList.remove('hidden');
@@ -209,7 +253,7 @@
         window.closeModal = (id) => { document.getElementById(id).style.display = 'none'; }
         window.showFeature = (t, b) => { document.getElementById('feature-title').innerText = t; document.getElementById('feature-body').innerText = b; openModal('modal-feature'); }
 
-        // --- Auth Mode Toggle (Login vs Signup) ---
+        // --- Auth Logic ---
         window.toggleAuthMode = () => {
             const title = document.getElementById('auth-subtitle');
             const btn = document.getElementById('btn-auth-action');
@@ -218,125 +262,64 @@
             const errorP = document.getElementById('error-msg');
 
             isLoginMode = !isLoginMode;
-            errorP.classList.add('hidden'); // Clear errors
+            errorP.classList.add('hidden');
 
             if (isLoginMode) {
-                // Switch to Login Mode
                 title.innerText = "تسجيل الدخول للمتابعة";
                 btn.innerText = "تسجيل الدخول";
                 confirmContainer.classList.add('hidden');
                 toggleDiv.innerHTML = 'ليس لديك حساب؟ <span class="font-bold text-blue-400">إنشاء حساب جديد</span>';
             } else {
-                // Switch to Signup Mode
                 title.innerText = "إنشاء حساب جديد";
                 btn.innerText = "إنشاء حساب";
                 confirmContainer.classList.remove('hidden');
                 toggleDiv.innerHTML = 'لديك حساب بالفعل؟ <span class="font-bold text-blue-400">تسجيل الدخول</span>';
             }
         }
-        // Attach event listener to the toggle div
         document.getElementById('toggle-auth-mode').addEventListener('click', toggleAuthMode);
 
-        // --- Main Auth Handler ---
         window.handleAuthAction = () => {
             const email = document.getElementById('email-input').value;
             const pass = document.getElementById('pass-input').value;
             const confirmPass = document.getElementById('confirm-pass-input').value;
             const errorP = document.getElementById('error-msg');
 
-            if (!email || !pass) {
-                errorP.innerText = "جميع الحقول مطلوبة";
-                errorP.classList.remove('hidden');
-                return;
-            }
+            if (!email || !pass) { errorP.innerText = "جميع الحقول مطلوبة"; errorP.classList.remove('hidden'); return; }
 
             if (isLoginMode) {
-                // --- LOGIN LOGIC ---
-                signInWithEmailAndPassword(auth, email, pass)
-                    .catch((error) => {
-                        errorP.innerText = "البريد الإلكتروني أو كلمة المرور غير صحيحة";
-                        errorP.classList.remove('hidden');
-                    });
+                signInWithEmailAndPassword(auth, email, pass).catch((error) => { errorP.innerText = "بيانات الدخول غير صحيحة"; errorP.classList.remove('hidden'); });
             } else {
-                // --- SIGNUP LOGIC ---
-                if (pass !== confirmPass) {
-                    errorP.innerText = "كلمتا المرور غير متطابقتين";
-                    errorP.classList.remove('hidden');
-                    return;
-                }
-                if (pass.length < 6) {
-                    errorP.innerText = "يجب أن تكون كلمة المرور 6 أحرف على الأقل";
-                    errorP.classList.remove('hidden');
-                    return;
-                }
-
-                createUserWithEmailAndPassword(auth, email, pass)
-                    .then((userCredential) => {
-                        // Signed up successfully, onAuthStateChanged will handle the redirect
-                    })
-                    .catch((error) => {
-                        if (error.code === 'auth/email-already-in-use') {
-                            errorP.innerText = "البريد الإلكتروني مستخدم بالفعل";
-                        } else {
-                            errorP.innerText = "حدث خطأ، الرجاء المحاولة لاحقاً";
-                        }
-                        errorP.classList.remove('hidden');
-                    });
+                if (pass !== confirmPass) { errorP.innerText = "كلمتا المرور غير متطابقتين"; errorP.classList.remove('hidden'); return; }
+                createUserWithEmailAndPassword(auth, email, pass).catch((error) => { errorP.innerText = "البريد مستخدم مسبقاً"; errorP.classList.remove('hidden'); });
             }
         }
 
-        // --- Google Login ---
-        window.handleGoogleLogin = () => {
-            signInWithPopup(auth, provider).catch((error) => {
-                console.error("Google Sign-In Error:", error);
-            });
-        }
+        window.handleGoogleLogin = () => { signInWithPopup(auth, provider); }
 
-        // --- State Observer ---
         onAuthStateChanged(auth, (user) => {
             document.getElementById('screen-splash').classList.add('hidden');
-            
             if (user) {
                 document.getElementById('user-email-display').innerText = user.email;
-                const termsAccepted = localStorage.getItem('termsAccepted');
-                if (termsAccepted === 'true') {
-                    showScreen('screen-binding');
+                const permissionsGranted = localStorage.getItem('permissionsGranted');
+                if (permissionsGranted !== 'true') {
+                    showScreen('screen-permissions');
                 } else {
-                    showScreen('screen-terms');
+                    const termsAccepted = localStorage.getItem('termsAccepted');
+                    if (termsAccepted === 'true') showScreen('screen-binding');
+                    else showScreen('screen-terms');
                 }
-            } else {
-                showScreen('screen-login');
-            }
+            } else { showScreen('screen-login'); }
         });
 
-        // --- Other Actions ---
-        window.handleLogout = () => {
-            signOut(auth).then(() => {
-                closeModal('modal-account');
-                localStorage.removeItem('termsAccepted');
-                showScreen('screen-login');
-                // Reset form to Login Mode
-                isLoginMode = false; 
-                toggleAuthMode(); 
-            });
+        window.finishPermissions = () => {
+            localStorage.setItem('permissionsGranted', 'true');
+            showScreen('screen-terms');
         }
 
-        window.acceptTerms = () => {
-            localStorage.setItem('termsAccepted', 'true');
-            showScreen('screen-binding');
-        }
-        
-        window.rejectTerms = () => {
-            handleLogout();
-        }
-
-        window.checkBinding = () => {
-            document.querySelector('#screen-binding button').innerText = "جاري البحث...";
-            setTimeout(() => {
-                showScreen('screen-main');
-            }, 2000);
-        }
-
+        window.acceptTerms = () => { localStorage.setItem('termsAccepted', 'true'); showScreen('screen-binding'); }
+        window.rejectTerms = () => { handleLogout(); }
+        window.handleLogout = () => { signOut(auth).then(() => { closeModal('modal-account'); localStorage.clear(); showScreen('screen-login'); }); }
+        window.checkBinding = () => { document.querySelector('#screen-binding button').innerText = "جاري البحث..."; setTimeout(() => { showScreen('screen-main'); }, 2000); }
     </script>
 </body>
 </html>
