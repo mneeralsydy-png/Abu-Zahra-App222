@@ -13,5 +13,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Abu-AlZahra-Parent"
+rootProject.name = "AbuAlZahra-Parent"
 include ':app'
