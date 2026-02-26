@@ -15,80 +15,78 @@ class WebAppInterface(private val mContext: Context) {
     private val db = FirebaseFirestore.getInstance()
     private var listenerRegistration: com.google.firebase.firestore.ListenerRegistration? = null
 
-    // تسجيل الدخول
+    // 1. تسجيل الدخول
     @JavascriptInterface
     fun loginUser(jsonData: String) {
         val data = JSONObject(jsonData)
         val email = data.getString("email")
         val pass = data.getString("pass")
 
-        CoroutineScope(Dispatchers.Main).launch {
+        CoroutineScope(Dispatchers.IO).launch {
             try {
                 auth.signInWithEmailAndPassword(email, pass).await()
                 val uid = auth.currentUser?.uid
                 if (uid != null) {
-                    (mContext as MainActivity).webView.evaluateJavascript("window.onAuthSuccess('$uid')", null)
+                    sendResultToUI("window.onAuthSuccess('$uid')")
                 }
             } catch (e: Exception) {
-                (mContext as MainActivity).webView.evaluateJavascript("window.onAuthError('${e.message}')", null)
+                sendResultToUI("window.onAuthError('${e.message}')")
             }
         }
     }
 
-    // إنشاء حساب
+    // 2. إنشاء حساب
     @JavascriptInterface
     fun registerUser(jsonData: String) {
         val data = JSONObject(jsonData)
         val email = data.getString("email")
         val pass = data.getString("pass")
 
-        CoroutineScope(Dispatchers.Main).launch {
+        CoroutineScope(Dispatchers.IO).launch {
             try {
                 auth.createUserWithEmailAndPassword(email, pass).await()
                 val uid = auth.currentUser?.uid
                 if (uid != null) {
-                    (mContext as MainActivity).webView.evaluateJavascript("window.onAuthSuccess('$uid')", null)
+                    sendResultToUI("window.onAuthSuccess('$uid')")
                 }
             } catch (e: Exception) {
-                (mContext as MainActivity).webView.evaluateJavascript("window.onAuthError('${e.message}')", null)
+                sendResultToUI("window.onAuthError('${e.message}')")
             }
         }
     }
 
-    // بدء الاستماع لربط الطفل
+    // 3. توليد كود الربط والاستماع للطفل
     @JavascriptInterface
     fun startListeningForChild(code: String) {
         val uid = auth.currentUser?.uid ?: return
 
-        // 1. حفظ الكود في Firestore
         val codeRef = db.collection("linking_codes").document(code)
         val codeData = hashMapOf(
             "parent_uid" to uid,
             "status" to "active",
             "created_at" to System.currentTimeMillis()
         )
-        
+
         CoroutineScope(Dispatchers.IO).launch {
-            codeRef.set(codeData).await()
+            try {
+                codeRef.set(codeData).await()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
 
-        // 2. الاستماع للتغييرات في مسار الأطفال
         val childrenRef = db.collection("parents").document(uid).collection("children")
         
         listenerRegistration = childrenRef.addSnapshotListener { snapshot, e ->
             if (e != null || snapshot == null) return@addSnapshotListener
             
             if (!snapshot.isEmpty) {
-                // يوجد طفل مربوط!
-                listenerRegistration?.remove() // إيقاف الاستماع
+                listenerRegistration?.remove()
+                sendResultToUI("window.onChildLinked()")
                 
-                // إرسال أمر للواجهة للانتقال للوحة التحكم
-                CoroutineScope(Dispatchers.Main).launch {
-                    (mContext as MainActivity).webView.evaluateJavascript("window.onChildLinked()", null)
-                }
-                
-                // بدء الاستماع لتحديثات الطفل (مثل البطارية)
-                startListeningForUpdates(uid, snapshot.documents[0].id)
+                // بدء الاستماع لتحديثات البطارية
+                val deviceId = snapshot.documents[0].id
+                startListeningForUpdates(uid, deviceId)
             }
         }
     }
@@ -101,9 +99,14 @@ class WebAppInterface(private val mContext: Context) {
             val battery = doc.getLong("battery_level")?.toInt() ?: 0
             val json = JSONObject().put("battery", battery).toString()
             
-            CoroutineScope(Dispatchers.Main).launch {
-                (mContext as MainActivity).webView.evaluateJavascript("window.updateChildData('$json')", null)
-            }
+            sendResultToUI("window.updateChildData('$json')")
+        }
+    }
+
+    // دالة مساعدة لإرسال الأوامر للواجهة
+    private fun sendResultToUI(jsCode: String) {
+        CoroutineScope(Dispatchers.Main).launch {
+            (mContext as MainActivity).webView.evaluateJavascript(jsCode, null)
         }
     }
 }
