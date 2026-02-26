@@ -1,8 +1,8 @@
-name: Abu Zahra Ultimate Victory
+name: Abu Zahra Final Victory Build
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "Push" ]
   workflow_dispatch:
 
 jobs:
@@ -19,22 +19,17 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Force Install Stable Gradle 8.2
+      - name: Reconstruction & Fix Environment
         run: |
-          wget -q https://services.gradle.org/distributions/gradle-8.2-bin.zip
-          unzip -q gradle-8.2-bin.zip
-          echo "GRADLE_HOME=$(pwd)/gradle-8.2" >> $GITHUB_ENV
-          echo "$(pwd)/gradle-8.2/bin" >> $GITHUB_PATH
-
-      - name: Hard Reset & Build Project
-        run: |
-          # 1. مسح شامل لكل المخلفات القديمة
-          rm -rf app build.gradle settings.gradle gradlew* gradle .gradle
+          # 1. تنظيف شامل لضمان عدم وجود ملفات تالفة
+          rm -rf app build.gradle settings.gradle gradlew gradlew.bat gradle .gradle
           
-          # 2. بناء هيكل المجلدات
-          mkdir -p app/src/main/assets app/src/main/res/values app/src/main/java/com/abualzahra/parent
+          # 2. إنشاء المجلدات الأساسية (Assets و Java)
+          mkdir -p app/src/main/assets
+          mkdir -p app/src/main/res/values
+          mkdir -p app/src/main/java/com/abualzahra/parent
 
-          # 3. إعدادات Gradle المستقرة
+          # 3. إعدادات Gradle المستقرة (حل مشكلة Gradle 9)
           cat <<EOF > settings.gradle
           pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
           dependencyResolutionManagement {
@@ -53,20 +48,32 @@ jobs:
           android {
               namespace 'com.abualzahra.parent'
               compileSdk 34
-              defaultConfig { applicationId "com.abualzahra.parent"; minSdk 24; targetSdk 34; versionCode 1; versionName "1.0" }
+              defaultConfig { 
+                  applicationId "com.abualzahra.parent"
+                  minSdk 24
+                  targetSdk 34
+                  versionCode 1
+                  versionName "1.0"
+              }
               compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
           }
-          dependencies { implementation 'androidx.appcompat:appcompat:1.6.1'; implementation 'com.google.android.material:material:1.11.0' }
+          dependencies { 
+              implementation 'androidx.appcompat:appcompat:1.6.1'
+              implementation 'com.google.android.material:material:1.11.0'
+          }
           EOF
 
-          # 5. الموارد والكود (HTML & Java)
-          echo '<!DOCTYPE html><html dir="rtl"><body style="background:#f0f0f0;"><h1>تطبيق أبو الزهراء يعمل بنجاح!</h1></body></html>' > app/src/main/assets/index.html
+          # 5. وضع ملف الويب (المسار الذي حددته)
+          echo '<!DOCTYPE html><html dir="rtl"><body><h1 style="text-align:center;">تم بناء تطبيق أبو الزهراء بنجاح!</h1></body></html>' > app/src/main/assets/index.html
+
+          # 6. الموارد والمانيفست
           echo '<?xml version="1.0" encoding="utf-8"?><resources><string name="app_name">AbuAlZahra</string></resources>' > app/src/main/res/values/strings.xml
           echo '<?xml version="1.0" encoding="utf-8"?><resources><style name="Theme.AbuAlZahra" parent="Theme.MaterialComponents.DayNight.NoActionBar"/></resources>' > app/src/main/res/values/styles.xml
           
           cat <<EOF > app/src/main/AndroidManifest.xml
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <uses-permission android:name="android.permission.INTERNET" />
               <application android:label="@string/app_name" android:theme="@style/Theme.AbuAlZahra">
                   <activity android:name=".MainActivity" android:exported="true">
                       <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
@@ -75,6 +82,7 @@ jobs:
           </manifest>
           EOF
 
+          # 7. كود MainActivity لفتح ملف Assets
           cat <<EOF > app/src/main/java/com/abualzahra/parent/MainActivity.kt
           package com.abualzahra.parent
           import android.os.Bundle
@@ -91,12 +99,16 @@ jobs:
           }
           EOF
 
-      - name: Build APK with Specific Gradle
+          # 8. توليد الجرادل المستقر
+          gradle wrapper --gradle-version 8.2
+
+      - name: Build APK
         run: |
-          gradle :app:assembleDebug --no-daemon
+          chmod +x gradlew
+          ./gradlew :app:assembleDebug --no-daemon
 
       - name: Upload Final APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4 # الحل النهائي لمشكلة الصورة 21 (استخدام الإصدار الرابع)
         with:
-          name: AbuAlZahra-Final-Success
-          path: app/build/outputs/apk/debug/*.apk
+          name: AbuAlZahra-Success-APK
+          path: "**/*.apk" # حل مشكلة المسار في الصورة 22
