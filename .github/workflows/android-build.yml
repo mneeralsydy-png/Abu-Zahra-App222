@@ -1,4 +1,4 @@
-name: Abu Zahra Final Stability Build
+name: Abu Zahra Final Victory Build
 
 on:
   push:
@@ -19,17 +19,17 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Critical Project Reconstruction
+      - name: Clean & Force Stable Environment
         run: |
-          # 1. مسح شامل للمخلفات القديمة
+          # 1. مسح شامل لأي إعدادات قديمة أو تالفة
           rm -rf app build.gradle settings.gradle gradlew gradlew.bat gradle .gradle
           
-          # 2. إنشاء هيكل المجلدات المطلوب بالضبط
+          # 2. إنشاء المجلدات الأساسية
           mkdir -p app/src/main/assets
           mkdir -p app/src/main/res/values
           mkdir -p app/src/main/java/com/abualzahra/parent
 
-          # 3. إنشاء ملف الإعدادات (بصيغة متوافقة مع Gradle 8+)
+          # 3. إعدادات Gradle الحديثة والمستقرة (Settings)
           cat <<EOF > settings.gradle
           pluginManagement {
               repositories { google(); mavenCentral(); gradlePluginPortal() }
@@ -42,15 +42,15 @@ jobs:
           include ':app'
           EOF
 
-          # 4. ملف البناء الرئيسي (Root Build)
+          # 4. ملف البناء الرئيسي (Root Build) - تثبيت الإصدارات
           cat <<EOF > build.gradle
           plugins {
-              id 'com.android.application' version '8.2.0' apply false
-              id 'org.jetbrains.kotlin.android' version '1.9.0' apply false
+              id 'com.android.application' version '8.2.2' apply false
+              id 'org.jetbrains.kotlin.android' version '1.9.22' apply false
           }
           EOF
 
-          # 5. ملف بناء التطبيق (App Build) - تم تصحيح مكان compileSdk
+          # 5. ملف بناء التطبيق (App Build) - حل مشكلة compileSdk
           cat <<EOF > app/build.gradle
           plugins {
               id 'com.android.application'
@@ -73,6 +73,9 @@ jobs:
                   sourceCompatibility JavaVersion.VERSION_17
                   targetCompatibility JavaVersion.VERSION_17
               }
+              kotlinOptions {
+                  jvmTarget = '17'
+              }
           }
 
           dependencies {
@@ -81,14 +84,14 @@ jobs:
           }
           EOF
 
-          # 6. إنشاء ملف الويب في المسار المطلوب
-          echo '<!DOCTYPE html><html><head><meta charset="utf-8"></head><body><h1 style="text-align:center;">تطبيق أبو الزهراء</h1></body></html>' > app/src/main/assets/index.html
+          # 6. وضع ملف الويب (index.html)
+          echo '<!DOCTYPE html><html dir="rtl"><body><h1 style="text-align:center;">تطبيق أبو الزهراء جاهز</h1></body></html>' > app/src/main/assets/index.html
 
           # 7. ملفات الموارد (XML)
           echo '<?xml version="1.0" encoding="utf-8"?><resources><string name="app_name">AbuAlZahra</string></resources>' > app/src/main/res/values/strings.xml
           echo '<?xml version="1.0" encoding="utf-8"?><resources><style name="Theme.AbuAlZahra" parent="Theme.MaterialComponents.DayNight.NoActionBar"/></resources>' > app/src/main/res/values/styles.xml
 
-          # 8. ملف المانيفست
+          # 8. المانيفست
           cat <<EOF > app/src/main/AndroidManifest.xml
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
@@ -120,16 +123,16 @@ jobs:
           }
           EOF
 
-          # 10. استخدام إصدار محدد من Gradle لضمان الاستقرار
-          gradle wrapper --gradle-version 8.2
+          # 10. إجبار النظام على استخدام إصدار 8.2 (الحل السحري لصورك)
+          gradle wrapper --gradle-version 8.2.2
 
-      - name: Build Final APK
+      - name: Final Build
         run: |
           chmod +x gradlew
-          ./gradlew :app:assembleDebug
+          ./gradlew :app:assembleDebug --no-daemon
 
-      - name: Upload APK Artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: AbuAlZahra-App-Success
+          name: AbuAlZahra-Success-APK
           path: app/build/outputs/apk/debug/*.apk
