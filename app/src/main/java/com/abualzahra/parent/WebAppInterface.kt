@@ -1,74 +1,109 @@
-package com.abualzahra.parent
+package com.abuzahra.manager
 
-import android.Manifest
 import android.content.Context
-import android.content.Intent
-import android.content.pm.PackageManager
-import android.location.LocationManager
-import android.provider.Settings
 import android.webkit.JavascriptInterface
-import android.widget.Toast
-import androidx.core.content.ContextCompat
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import org.json.JSONObject
-import com.abualzahra.parent.services.LocalSyncService
 
 class WebAppInterface(private val mContext: Context) {
+    private val auth = FirebaseAuth.getInstance()
+    private val db = FirebaseFirestore.getInstance()
+    private var listenerRegistration: com.google.firebase.firestore.ListenerRegistration? = null
 
+    // تسجيل الدخول
     @JavascriptInterface
-    fun showToast(message: String) {
-        Toast.makeText(mContext, message, Toast.LENGTH_SHORT).show()
-    }
+    fun loginUser(jsonData: String) {
+        val data = JSONObject(jsonData)
+        val email = data.getString("email")
+        val pass = data.getString("pass")
 
-    // التحقق مما إذا كانت صلاحية الموقع مفعلة حقاً
-    @JavascriptInterface
-    fun isLocationGranted(): Boolean {
-        return ContextCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-    }
-
-    // فتح إعدادات الموقع
-    @JavascriptInterface
-    fun openLocationSettings() {
-        val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        mContext.startActivity(intent)
-    }
-    
-    // فتح إعدادات التطبيق (لإعطاء صلاحيات يدوياً إذا رفضها المستخدم)
-    @JavascriptInterface
-    fun openAppSettings() {
-        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-        val uri = android.net.Uri.fromParts("package", mContext.packageName, null)
-        intent.data = uri
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        mContext.startActivity(intent)
-    }
-
-    @JavascriptInterface
-    fun startBindingSession(code: String) {
-        Toast.makeText(mContext, "جاري تشغيل خدمة الاكتشاف... الكود: $code", Toast.LENGTH_LONG).show()
-        // هنا يمكنك بدء الـ Service التي تستمع للاتصال المحلي
-        val serviceIntent = Intent(mContext, LocalSyncService::class.java).apply {
-            action = "START_LISTENING"
-            putExtra("code", code)
+        CoroutineScope(Dispatchers.Main).launch {
+            try {
+                auth.signInWithEmailAndPassword(email, pass).await()
+                val uid = auth.currentUser?.uid
+                if (uid != null) {
+                    (mContext as MainActivity).webView.evaluateJavascript("window.onAuthSuccess('$uid')", null)
+                }
+            } catch (e: Exception) {
+                (mContext as MainActivity).webView.evaluateJavascript("window.onAuthError('${e.message}')", null)
+            }
         }
-        mContext.startService(serviceIntent)
     }
 
+    // إنشاء حساب
     @JavascriptInterface
-    fun sendCommand(cmd: String) {
-        val serviceIntent = Intent(mContext, LocalSyncService::class.java).apply {
-            action = "SEND_COMMAND"
-            putExtra("command", cmd)
+    fun registerUser(jsonData: String) {
+        val data = JSONObject(jsonData)
+        val email = data.getString("email")
+        val pass = data.getString("pass")
+
+        CoroutineScope(Dispatchers.Main).launch {
+            try {
+                auth.createUserWithEmailAndPassword(email, pass).await()
+                val uid = auth.currentUser?.uid
+                if (uid != null) {
+                    (mContext as MainActivity).webView.evaluateJavascript("window.onAuthSuccess('$uid')", null)
+                }
+            } catch (e: Exception) {
+                (mContext as MainActivity).webView.evaluateJavascript("window.onAuthError('${e.message}')", null)
+            }
         }
-        mContext.startService(serviceIntent)
     }
-    
+
+    // بدء الاستماع لربط الطفل
     @JavascriptInterface
-    fun getDeviceInfo(): String {
-        val info = JSONObject()
-        info.put("model", android.os.Build.MODEL)
-        info.put("manufacturer", android.os.Build.MANUFACTURER)
-        info.put("os_version", android.os.Build.VERSION.RELEASE)
-        return info.toString()
+    fun startListeningForChild(code: String) {
+        val uid = auth.currentUser?.uid ?: return
+
+        // 1. حفظ الكود في Firestore
+        val codeRef = db.collection("linking_codes").document(code)
+        val codeData = hashMapOf(
+            "parent_uid" to uid,
+            "status" to "active",
+            "created_at" to System.currentTimeMillis()
+        )
+        
+        CoroutineScope(Dispatchers.IO).launch {
+            codeRef.set(codeData).await()
+        }
+
+        // 2. الاستماع للتغييرات في مسار الأطفال
+        val childrenRef = db.collection("parents").document(uid).collection("children")
+        
+        listenerRegistration = childrenRef.addSnapshotListener { snapshot, e ->
+            if (e != null || snapshot == null) return@addSnapshotListener
+            
+            if (!snapshot.isEmpty) {
+                // يوجد طفل مربوط!
+                listenerRegistration?.remove() // إيقاف الاستماع
+                
+                // إرسال أمر للواجهة للانتقال للوحة التحكم
+                CoroutineScope(Dispatchers.Main).launch {
+                    (mContext as MainActivity).webView.evaluateJavascript("window.onChildLinked()", null)
+                }
+                
+                // بدء الاستماع لتحديثات الطفل (مثل البطارية)
+                startListeningForUpdates(uid, snapshot.documents[0].id)
+            }
+        }
+    }
+
+    private fun startListeningForUpdates(parentUid: String, deviceId: String) {
+        val deviceRef = db.collection("parents").document(parentUid).collection("children").document(deviceId)
+        deviceRef.addSnapshotListener { doc, e ->
+            if (e != null || doc == null || !doc.exists()) return@addSnapshotListener
+            
+            val battery = doc.getLong("battery_level")?.toInt() ?: 0
+            val json = JSONObject().put("battery", battery).toString()
+            
+            CoroutineScope(Dispatchers.Main).launch {
+                (mContext as MainActivity).webView.evaluateJavascript("window.updateChildData('$json')", null)
+            }
+        }
     }
 }
