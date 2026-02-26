@@ -1,4 +1,4 @@
-name: Abu Zahra Final Victory Build
+name: Abu Zahra Ultimate Victory
 
 on:
   push:
@@ -19,94 +19,62 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Clean & Force Stable Environment
+      - name: Force Install Stable Gradle 8.2
         run: |
-          # 1. مسح شامل لأي إعدادات قديمة أو تالفة
-          rm -rf app build.gradle settings.gradle gradlew gradlew.bat gradle .gradle
-          
-          # 2. إنشاء المجلدات الأساسية
-          mkdir -p app/src/main/assets
-          mkdir -p app/src/main/res/values
-          mkdir -p app/src/main/java/com/abualzahra/parent
+          wget -q https://services.gradle.org/distributions/gradle-8.2-bin.zip
+          unzip -q gradle-8.2-bin.zip
+          echo "GRADLE_HOME=$(pwd)/gradle-8.2" >> $GITHUB_ENV
+          echo "$(pwd)/gradle-8.2/bin" >> $GITHUB_PATH
 
-          # 3. إعدادات Gradle الحديثة والمستقرة (Settings)
+      - name: Hard Reset & Build Project
+        run: |
+          # 1. مسح شامل لكل المخلفات القديمة
+          rm -rf app build.gradle settings.gradle gradlew* gradle .gradle
+          
+          # 2. بناء هيكل المجلدات
+          mkdir -p app/src/main/assets app/src/main/res/values app/src/main/java/com/abualzahra/parent
+
+          # 3. إعدادات Gradle المستقرة
           cat <<EOF > settings.gradle
-          pluginManagement {
-              repositories { google(); mavenCentral(); gradlePluginPortal() }
-          }
+          pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
           dependencyResolutionManagement {
               repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
               repositories { google(); mavenCentral() }
           }
-          rootProject.name = "AbuAlZahra-App"
+          rootProject.name = "AbuAlZahra"
           include ':app'
           EOF
 
-          # 4. ملف البناء الرئيسي (Root Build) - تثبيت الإصدارات
-          cat <<EOF > build.gradle
-          plugins {
-              id 'com.android.application' version '8.2.2' apply false
-              id 'org.jetbrains.kotlin.android' version '1.9.22' apply false
-          }
-          EOF
-
-          # 5. ملف بناء التطبيق (App Build) - حل مشكلة compileSdk
+          # 4. ملفات البناء (Root & App)
+          echo "plugins { id 'com.android.application' version '8.2.0' apply false; id 'org.jetbrains.kotlin.android' version '1.9.0' apply false }" > build.gradle
+          
           cat <<EOF > app/build.gradle
-          plugins {
-              id 'com.android.application'
-              id 'org.jetbrains.kotlin.android'
-          }
-
+          plugins { id 'com.android.application'; id 'org.jetbrains.kotlin.android' }
           android {
               namespace 'com.abualzahra.parent'
               compileSdk 34
-
-              defaultConfig {
-                  applicationId "com.abualzahra.parent"
-                  minSdk 24
-                  targetSdk 34
-                  versionCode 1
-                  versionName "1.0"
-              }
-              
-              compileOptions {
-                  sourceCompatibility JavaVersion.VERSION_17
-                  targetCompatibility JavaVersion.VERSION_17
-              }
-              kotlinOptions {
-                  jvmTarget = '17'
-              }
+              defaultConfig { applicationId "com.abualzahra.parent"; minSdk 24; targetSdk 34; versionCode 1; versionName "1.0" }
+              compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
           }
-
-          dependencies {
-              implementation 'androidx.appcompat:appcompat:1.6.1'
-              implementation 'com.google.android.material:material:1.11.0'
-          }
+          dependencies { implementation 'androidx.appcompat:appcompat:1.6.1'; implementation 'com.google.android.material:material:1.11.0' }
           EOF
 
-          # 6. وضع ملف الويب (index.html)
-          echo '<!DOCTYPE html><html dir="rtl"><body><h1 style="text-align:center;">تطبيق أبو الزهراء جاهز</h1></body></html>' > app/src/main/assets/index.html
-
-          # 7. ملفات الموارد (XML)
+          # 5. الموارد والكود (HTML & Java)
+          echo '<!DOCTYPE html><html dir="rtl"><body style="background:#f0f0f0;"><h1>تطبيق أبو الزهراء يعمل بنجاح!</h1></body></html>' > app/src/main/assets/index.html
           echo '<?xml version="1.0" encoding="utf-8"?><resources><string name="app_name">AbuAlZahra</string></resources>' > app/src/main/res/values/strings.xml
           echo '<?xml version="1.0" encoding="utf-8"?><resources><style name="Theme.AbuAlZahra" parent="Theme.MaterialComponents.DayNight.NoActionBar"/></resources>' > app/src/main/res/values/styles.xml
-
-          # 8. المانيفست
+          
           cat <<EOF > app/src/main/AndroidManifest.xml
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
               <application android:label="@string/app_name" android:theme="@style/Theme.AbuAlZahra">
                   <activity android:name=".MainActivity" android:exported="true">
-                      <intent-filter>
-                          <action android:name="android.intent.action.MAIN" />
-                          <category android:name="android.intent.category.LAUNCHER" />
-                      </intent-filter>
+                      <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
                   </activity>
               </application>
           </manifest>
           EOF
 
-          # 9. كود MainActivity
           cat <<EOF > app/src/main/java/com/abualzahra/parent/MainActivity.kt
           package com.abualzahra.parent
           import android.os.Bundle
@@ -123,16 +91,12 @@ jobs:
           }
           EOF
 
-          # 10. إجبار النظام على استخدام إصدار 8.2 (الحل السحري لصورك)
-          gradle wrapper --gradle-version 8.2.2
-
-      - name: Final Build
+      - name: Build APK with Specific Gradle
         run: |
-          chmod +x gradlew
-          ./gradlew :app:assembleDebug --no-daemon
+          gradle :app:assembleDebug --no-daemon
 
-      - name: Upload APK
+      - name: Upload Final APK
         uses: actions/upload-artifact@v4
         with:
-          name: AbuAlZahra-Success-APK
+          name: AbuAlZahra-Final-Success
           path: app/build/outputs/apk/debug/*.apk
