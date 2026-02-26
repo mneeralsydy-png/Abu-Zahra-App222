@@ -14,6 +14,7 @@ import androidx.core.content.ContextCompat
 class MainActivity : AppCompatActivity() {
 
     private lateinit var webView: WebView
+    private val PERMISSIONS_REQUEST_CODE = 1001
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -21,7 +22,9 @@ class MainActivity : AppCompatActivity() {
 
         webView = findViewById(R.id.webview)
         setupWebView()
-        checkPermissions()
+        
+        // طلب الصلاحيات الضرورية عند بدء التشغيل
+        checkAndRequestPermissions()
     }
 
     private fun setupWebView() {
@@ -33,25 +36,45 @@ class MainActivity : AppCompatActivity() {
         webSettings.allowFileAccess = true
         webSettings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
 
-        // ربط الواجهة الأصلية
         webView.addJavascriptInterface(WebAppInterface(this), "AndroidNative")
         webView.webViewClient = WebViewClient()
-
-        // تحميل ملف الـ HTML من مجلد assets
         webView.loadUrl("file:///android_asset/index.html")
     }
 
-    private fun checkPermissions() {
-        val permissions = mutableListOf<String>()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                permissions.add(Manifest.permission.POST_NOTIFICATIONS)
+    private fun checkAndRequestPermissions() {
+        val permissionsNeeded = mutableListOf<String>()
+
+        // قائمة الصلاحيات المطلوبة
+        val permissions = arrayOf(
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+            Manifest.permission.CAMERA,
+            Manifest.permission.RECORD_AUDIO
+        )
+
+        // التحقق من الصلاحيات غير الممنوحة
+        for (permission in permissions) {
+            if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+                permissionsNeeded.add(permission)
             }
         }
-        // أضف المزيد من الصلاحيات حسب الحاجة
-        
-        if (permissions.isNotEmpty()) {
-            ActivityCompat.requestPermissions(this, permissions.toTypedArray(), 101)
+
+        // طلب الصلاحيات إذا كانت هناك حاجة
+        if (permissionsNeeded.isNotEmpty()) {
+            ActivityCompat.requestPermissions(
+                this,
+                permissionsNeeded.toTypedArray(),
+                PERMISSIONS_REQUEST_CODE
+            )
+        }
+    }
+
+    // التعامل مع نتيجة طلب الصلاحيات
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == PERMISSIONS_REQUEST_CODE) {
+            // يمكنك إضافة منطق هنا إذا رفض المستخدم الصلاحيات
+            // مثلاً إظهار رسالة توضح أن التطبيق لن يعمل بشكل كامل
         }
     }
 
