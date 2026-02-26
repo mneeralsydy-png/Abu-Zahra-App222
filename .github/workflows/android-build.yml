@@ -1,9 +1,7 @@
-name: Android CI Build
+name: Android CI Build Professional
 
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
     branches: [ "main" ]
 
 jobs:
@@ -12,23 +10,39 @@ jobs:
 
     steps:
     - name: Checkout Code
-      uses: actions/checkout@v4 # تم التحديث إلى v4
+      uses: actions/checkout@v4
 
     - name: Set up JDK 17
-      uses: actions/setup-java@v4 # تم التحديث إلى v4
+      uses: actions/setup-java@v4
       with:
         java-version: '17'
         distribution: 'temurin'
         cache: gradle
 
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
-      
+    # خطوة البحث الشامل وحل المشاكل تلقائياً
+    - name: Auto-locate and Fix Gradle
+      run: |
+        echo "Searching for gradlew..."
+        GRADLEW_PATH=$(find . -name gradlew | head -n 1)
+        
+        if [ -z "$GRADLEW_PATH" ]; then
+          echo "Gradlew not found, generating a new one..."
+          gradle wrapper
+          GRADLEW_PATH="./gradlew"
+        fi
+        
+        echo "Found gradlew at: $GRADLEW_PATH"
+        chmod +x "$GRADLEW_PATH"
+        # تخزين المسار لاستخدامه في الخطوة التالية
+        echo "GRADLEW_EXEC=$GRADLEW_PATH" >> $GITHUB_ENV
+
     - name: Build with Gradle
-      run: ./gradlew assembleDebug
-      
-    - name: Upload APK Artifact
-      uses: actions/upload-artifact@v4 # تم التحديث إلى v4
+      run: |
+        # تشغيل البناء باستخدام المسار الذي تم العثور عليه
+        ${{ env.GRADLEW_EXEC }} assembleDebug
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
       with:
-        name: AbuAlZahra-App
-        path: app/build/outputs/apk/debug/app-debug.apk
+        name: AbuAlZahra-App-Success
+        path: "**/build/outputs/apk/debug/*.apk" # البحث عن الـ APK في أي مكان تم إنتاجه فيه
