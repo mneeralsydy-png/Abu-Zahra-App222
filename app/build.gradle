@@ -39,10 +39,13 @@ dependencies {
     implementation 'com.google.android.material:material:1.11.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     
-    // Firebase
+    // === الإصلاح: إضافة Firebase BoM لتحديد الإصدارات تلقائياً ===
+    implementation platform('com.google.firebase:firebase-bom:32.7.2')
+
+    // Firebase Libraries (لا تحتاج لرقم إصدار عند استخدام BoM)
     implementation 'com.google.firebase:firebase-auth-ktx'
     implementation 'com.google.firebase:firebase-firestore-ktx'
     
-    // Coroutines (هام لعمل Firebase في الخلفية)
+    // Coroutines
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
 }
