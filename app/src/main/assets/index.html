@@ -5,89 +5,162 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Abu Al-Zahra Parent</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Tajawal', sans-serif; background-color: #0F172A; }
+        body { font-family: 'Tajawal', sans-serif; background-color: #0F172A; color: #E2E8F0; overflow: hidden; }
+        
+        /* إدارة الشاشات */
         .screen { display: none; position: fixed; inset: 0; flex-direction: column; }
         .screen.active { display: flex; }
-        .golden-text-title { font-family: 'Amiri', serif; background: linear-gradient(45deg, #bf953f, #fcf6ba, #b38728); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        
+        /* التنسيقات */
+        .glass-panel { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .golden-text-title { font-family: 'Amiri', serif; background: linear-gradient(45deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c); background-size: 200% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: shine 4s linear infinite; }
+        @keyframes shine { to { background-position: 200% center; } }
+        
+        /* تأثيرات */
+        .pulse-dot { animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
     </style>
 </head>
-<body class="text-gray-200">
+<body class="bg-slate-900">
 
-    <!-- 1. شاشة التحميل -->
-    <div id="screen-splash" class="screen active items-center justify-center bg-[#0F172A]">
-        <h1 class="text-6xl golden-text-title">Abu Al-Zahra</h1>
-        <div class="mt-8 w-8 h-8 border-4 border-blue-500 border-dashed rounded-full animate-spin"></div>
+    <!-- 1. شاشة التحميل (Splash) -->
+    <div id="screen-splash" class="screen active items-center justify-center bg-gradient-to-b from-slate-900 to-blue-900">
+        <div class="text-center">
+            <h1 class="text-7xl golden-text-title mb-4">Abu Al-Zahra</h1>
+            <p class="text-blue-300 text-sm tracking-widest mb-8">PARENTAL CONTROL SYSTEM</p>
+            <div class="w-10 h-10 border-4 border-blue-500 border-dashed rounded-full animate-spin mx-auto"></div>
+        </div>
     </div>
 
-    <!-- 2. شاشة تسجيل الدخول -->
+    <!-- 2. شاشة تسجيل الدخول / إنشاء الحساب -->
     <div id="screen-login" class="screen items-center justify-center bg-[#0F172A] p-6">
         <div class="w-full max-w-sm text-center space-y-6">
-            <h2 class="text-4xl golden-text-title">مرحباً</h2>
-            <div class="glass-panel rounded-2xl p-6 space-y-3 bg-slate-800 border border-slate-700">
-                <input id="txt-email" type="email" placeholder="البريد الإلكتروني" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none">
-                <input id="txt-pass" type="password" placeholder="كلمة المرور" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none">
-                <button onclick="handleLogin()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold">دخول</button>
-                <button onclick="handleRegister()" class="w-full bg-green-600 text-white py-3 rounded-xl font-bold">إنشاء حساب</button>
-                <p id="auth-error" class="text-red-400 text-xs hidden"></p>
+            <div class="mb-8">
+                <h2 class="text-5xl golden-text-title">مرحباً</h2>
+                <p class="text-blue-200 text-sm mt-2">سجل الدخول للمتابعة</p>
+            </div>
+            
+            <div class="glass-panel rounded-3xl p-6 space-y-4 border border-white/10 shadow-2xl">
+                <div class="space-y-3 text-right">
+                    <div>
+                        <label class="text-blue-200 text-xs block mb-1">البريد الإلكتروني</label>
+                        <input id="txt-email" type="email" class="w-full bg-white/5 border border-white/20 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-blue-400 text-sm" placeholder="example@email.com">
+                    </div>
+                    <div>
+                        <label class="text-blue-200 text-xs block mb-1">كلمة المرور</label>
+                        <input id="txt-pass" type="password" class="w-full bg-white/5 border border-white/20 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-blue-400 text-sm" placeholder="********">
+                    </div>
+                    <p id="auth-error" class="text-red-400 text-xs text-center hidden"></p>
+                    
+                    <button onclick="handleLogin()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-blue-500 transition">تسجيل الدخول</button>
+                </div>
+                
+                <div class="flex items-center gap-2 text-blue-300 text-xs">
+                    <div class="flex-1 h-[1px] bg-white/20"></div><span>أو</span><div class="flex-1 h-[1px] bg-white/20"></div>
+                </div>
+                
+                <button onclick="handleRegister()" class="w-full bg-green-600 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-green-500 transition">إنشاء حساب جديد</button>
             </div>
         </div>
     </div>
 
-    <!-- 3. شاشة الربط (توليد الكود) -->
+    <!-- 3. شاشة الربط (Binding - 9 Digits) -->
     <div id="screen-binding" class="screen items-center justify-center bg-[#0F172A] p-6">
         <div class="text-center w-full max-w-sm">
+            <div class="w-20 h-20 mx-auto bg-green-500/20 rounded-full flex items-center justify-center mb-4">
+                <svg class="w-10 h-10 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" /></svg>
+            </div>
             <h2 class="text-2xl text-white font-bold mb-2">ربط جهاز جديد</h2>
             <p class="text-gray-400 text-sm mb-6">أدخل هذا الكود في تطبيق الطفل</p>
             
+            <!-- عرض الكود -->
             <div class="bg-slate-800 border-2 border-dashed border-green-500 rounded-xl p-4 mb-6">
                 <p class="text-gray-400 text-xs mb-1">كود الربط (9 أرقام)</p>
                 <p id="display-code" class="text-4xl font-mono tracking-widest text-white font-bold">000 000 000</p>
             </div>
-            <p id="bind-status" class="text-xs text-gray-500">في انتظار اتصال جهاز الطفل...</p>
+
+            <div class="flex items-center justify-center gap-2 text-gray-400 text-xs mb-4">
+                <div class="w-2 h-2 rounded-full bg-green-500 pulse-dot"></div>
+                <span id="bind-status">في انتظار اتصال جهاز الطفل...</span>
+            </div>
         </div>
     </div>
 
-    <!-- 4. لوحة التحكم -->
+    <!-- 4. الواجهة الرئيسية (Dashboard) -->
     <div id="screen-main" class="screen bg-[#0F172A]">
+        <!-- Header -->
         <header class="bg-slate-900/80 border-b border-slate-700 px-4 py-3 flex justify-between items-center shrink-0 z-20">
             <h1 class="text-lg font-bold text-white">Abu <span class="golden-text-title">Al-Zahra</span></h1>
-            <span class="text-xs text-green-400 bg-green-500/10 px-2 py-1 rounded-full">متصل</span>
+            <div class="flex items-center gap-2">
+                <div id="conn-status" class="flex items-center gap-1 px-2 py-1 rounded-full bg-green-900 text-[10px] font-bold text-green-300">
+                    <div class="w-2 h-2 rounded-full bg-green-400 pulse-dot"></div>
+                    <span>ONLINE</span>
+                </div>
+                <button onclick="logout()" class="text-xs text-gray-400 border border-gray-600 rounded-full px-2 py-1">خروج</button>
+            </div>
         </header>
 
         <main class="flex-1 overflow-y-auto p-4 pb-24">
-            <div class="glass-panel rounded-2xl p-4 mb-4 flex items-center gap-4 bg-slate-800">
-                <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">S</div>
+            <!-- Device Card -->
+            <div id="device-card" class="glass-panel rounded-2xl p-4 mb-4 flex items-center gap-4 border border-slate-700">
+                <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold shadow-lg">S</div>
                 <div class="flex-1">
                     <h2 class="font-bold text-white">جهاز الطفل</h2>
-                    <div class="flex items-center gap-2 text-gray-400 text-xs"><span id="txt-battery">85%</span> | <span>Online</span></div>
+                    <div class="flex items-center gap-2 text-gray-400 text-xs">
+                        <span id="txt-battery">85%</span> | <span>الرياض</span>
+                    </div>
                 </div>
             </div>
-            <div class="grid grid-cols-3 gap-3">
-                 <button class="bg-slate-800 rounded-xl p-3 flex flex-col items-center h-24">
-                     <span class="text-2xl mb-1">📍</span>
-                     <span class="text-[10px] text-gray-200">الموقع</span>
-                 </button>
-                 <button class="bg-slate-800 rounded-xl p-3 flex flex-col items-center h-24">
-                     <span class="text-2xl mb-1">🔒</span>
-                     <span class="text-[10px] text-gray-200">قفل</span>
-                 </button>
-                 <button class="bg-slate-800 rounded-xl p-3 flex flex-col items-center h-24">
-                     <span class="text-2xl mb-1">📱</span>
-                     <span class="text-[10px] text-gray-200">التطبيقات</span>
-                 </button>
+
+            <!-- Quick Stats -->
+            <div class="grid grid-cols-2 gap-2 mb-4">
+                <div class="glass-panel rounded-xl p-3 text-center border border-slate-700">
+                    <p class="text-2xl font-bold text-white">3h</p>
+                    <p class="text-gray-500 text-[10px]">وقت الشاشة</p>
+                </div>
+                <div class="glass-panel rounded-xl p-3 text-center border border-slate-700">
+                    <p class="text-2xl font-bold text-white">0</p>
+                    <p class="text-gray-500 text-[10px]">تنبيهات</p>
+                </div>
+            </div>
+
+            <!-- Control Tools -->
+            <h3 class="text-gray-400 text-xs font-bold mb-2">التحكم المباشر</h3>
+            <div class="grid grid-cols-3 gap-3 mb-6">
+                <button onclick="sendCommand('location')" class="bg-slate-800 rounded-xl p-3 flex flex-col items-center justify-center h-24 hover:bg-slate-700 transition border border-slate-700">
+                    <div class="w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center mb-1">
+                        <svg class="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /></svg>
+                    </div>
+                    <span class="text-[10px] font-bold text-gray-200">الموقع</span>
+                </button>
+                <button onclick="sendCommand('lock')" class="bg-slate-800 rounded-xl p-3 flex flex-col items-center justify-center h-24 hover:bg-slate-700 transition border border-slate-700">
+                    <div class="w-10 h-10 bg-yellow-500/20 rounded-full flex items-center justify-center mb-1">
+                        <svg class="w-5 h-5 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                    </div>
+                    <span class="text-[10px] font-bold text-gray-200">قفل</span>
+                </button>
+                <button onclick="sendCommand('apps')" class="bg-slate-800 rounded-xl p-3 flex flex-col items-center justify-center h-24 hover:bg-slate-700 transition border border-slate-700">
+                    <div class="w-10 h-10 bg-purple-500/20 rounded-full flex items-center justify-center mb-1">
+                        <svg class="w-5 h-5 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+                    </div>
+                    <span class="text-[10px] font-bold text-gray-200">التطبيقات</span>
+                </button>
             </div>
         </main>
     </div>
 
+    <!-- JavaScript Logic -->
     <script>
-        // --- Native Bridge ---
+        // --- Native Bridge (التواصل مع كود Kotlin) ---
         function callNative(fn, arg) {
             if (typeof AndroidNative !== 'undefined') {
                 if (arg) AndroidNative[fn](arg); else AndroidNative[fn]();
             } else {
-                console.log(`Native call (${fn}) simulated.`);
+                console.warn(`Native bridge (${fn}) not found.`);
+                // محاكاة للاختبار في المتصفح (لمدة التطوير فقط)
+                simulateNative(fn, arg);
             }
         }
 
@@ -111,34 +184,64 @@
             callNative('registerUser', JSON.stringify({email: email, pass: pass}));
         }
 
+        function logout() {
+            callNative('logoutUser');
+            showScreen('screen-login');
+        }
+
         // --- Binding Logic ---
         function generateCode() {
+            // توليد كود عشوائي من 9 أرقام
             const code = Math.floor(100000000 + Math.random() * 900000000);
             return code.toString().substring(0,3) + " " + code.toString().substring(3,6) + " " + code.toString().substring(6);
         }
 
-        // --- Native Callbacks ---
+        // --- Native Callbacks (يتم استدعاؤها من Kotlin) ---
+        
+        // يتم استدعاؤها عند نجاح تسجيل الدخول/التسجيل
         window.onAuthSuccess = function(uid) {
             showScreen('screen-binding');
             const code = generateCode();
             document.getElementById('display-code').innerText = code;
-            callNative('startListeningForChild', code.replace(/\s/g, '')); // إرسال الكود لـ Kotlin لبدء الاستماع
+            // إرسال الكود لـ Kotlin لبدء الاستماع في قاعدة البيانات
+            // إزالة المسافات قبل الإرسال
+            callNative('startListeningForChild', code.replace(/\s/g, ''));
         };
 
+        // يتم استدعاؤها عند حدوث خطأ
         window.onAuthError = function(msg) {
             document.getElementById('auth-error').innerText = msg;
             document.getElementById('auth-error').classList.remove('hidden');
         };
 
+        // يتم استدعاؤها عند اكتشاف جهاز طفل جديد (Real-time)
         window.onChildLinked = function() {
             showScreen('screen-main');
         };
         
-        // تحديث البيانات في الواجهة من Kotlin
+        // تحديث البيانات في الواجهة (مثل البطارية)
         window.updateChildData = function(dataJson) {
-            const data = JSON.parse(dataJson);
-            if(data.battery) document.getElementById('txt-battery').innerText = data.battery + "%";
+            try {
+                const data = JSON.parse(dataJson);
+                if(data.battery) document.getElementById('txt-battery').innerText = data.battery + "%";
+            } catch(e) {}
         };
+
+        // --- Dashboard Logic ---
+        function sendCommand(cmd) {
+            callNative('sendCommandToChild', cmd);
+        }
+
+        // --- Simulation for Browser Testing ---
+        function simulateNative(fn, arg) {
+            console.log(`Simulating: ${fn}`);
+            if(fn === 'loginUser' || fn === 'registerUser') {
+                setTimeout(() => onAuthSuccess('test_uid'), 500);
+            }
+            if(fn === 'startListeningForChild') {
+                setTimeout(() => onChildLinked(), 2000);
+            }
+        }
 
     </script>
 </body>
