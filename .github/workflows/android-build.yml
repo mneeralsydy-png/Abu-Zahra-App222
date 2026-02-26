@@ -1,4 +1,4 @@
-name: Abu Zahra App Assets Victory
+name: Abu Zahra Final Stability Build
 
 on:
   push:
@@ -18,41 +18,49 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
-          cache: gradle
 
-      - name: Auto-Repair Project Structure
+      - name: Critical Project Reconstruction
         run: |
-          # 1. تنظيف وبناء المجلدات المطلوبة
-          rm -rf app build.gradle settings.gradle
+          # 1. مسح شامل للمخلفات القديمة
+          rm -rf app build.gradle settings.gradle gradlew gradlew.bat gradle .gradle
+          
+          # 2. إنشاء هيكل المجلدات المطلوب بالضبط
           mkdir -p app/src/main/assets
           mkdir -p app/src/main/res/values
           mkdir -p app/src/main/java/com/abualzahra/parent
 
-          # 2. إنشاء ملف الويب في المسار الذي حددته
-          cat <<EOF > app/src/main/assets/index.html
-          <!DOCTYPE html>
-          <html>
-          <head><meta charset="utf-8"><title>Abu Al Zahra</title></head>
-          <body><h1>مرحباً بك في تطبيق أبو الزهراء</h1></body>
-          </html>
-          EOF
-
-          # 3. إعدادات المشروع (Settings & Root Build)
-          echo "include ':app'" > settings.gradle
-          cat <<EOF > build.gradle
-          buildscript {
-              repositories { google(); mavenCentral() }
-              dependencies { classpath 'com.android.tools.build:gradle:8.2.0'; classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.0' }
+          # 3. إنشاء ملف الإعدادات (بصيغة متوافقة مع Gradle 8+)
+          cat <<EOF > settings.gradle
+          pluginManagement {
+              repositories { google(); mavenCentral(); gradlePluginPortal() }
           }
-          allprojects { repositories { google(); mavenCentral() } }
+          dependencyResolutionManagement {
+              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+              repositories { google(); mavenCentral() }
+          }
+          rootProject.name = "AbuAlZahra-App"
+          include ':app'
           EOF
 
-          # 4. إعدادات التطبيق (App Build)
+          # 4. ملف البناء الرئيسي (Root Build)
+          cat <<EOF > build.gradle
+          plugins {
+              id 'com.android.application' version '8.2.0' apply false
+              id 'org.jetbrains.kotlin.android' version '1.9.0' apply false
+          }
+          EOF
+
+          # 5. ملف بناء التطبيق (App Build) - تم تصحيح مكان compileSdk
           cat <<EOF > app/build.gradle
-          plugins { id 'com.android.application'; id 'kotlin-android' }
+          plugins {
+              id 'com.android.application'
+              id 'org.jetbrains.kotlin.android'
+          }
+
           android {
               namespace 'com.abualzahra.parent'
               compileSdk 34
+
               defaultConfig {
                   applicationId "com.abualzahra.parent"
                   minSdk 24
@@ -60,17 +68,27 @@ jobs:
                   versionCode 1
                   versionName "1.0"
               }
+              
+              compileOptions {
+                  sourceCompatibility JavaVersion.VERSION_17
+                  targetCompatibility JavaVersion.VERSION_17
+              }
           }
+
           dependencies {
               implementation 'androidx.appcompat:appcompat:1.6.1'
               implementation 'com.google.android.material:material:1.11.0'
           }
           EOF
 
-          # 5. ملف المانيفست والموارد
+          # 6. إنشاء ملف الويب في المسار المطلوب
+          echo '<!DOCTYPE html><html><head><meta charset="utf-8"></head><body><h1 style="text-align:center;">تطبيق أبو الزهراء</h1></body></html>' > app/src/main/assets/index.html
+
+          # 7. ملفات الموارد (XML)
           echo '<?xml version="1.0" encoding="utf-8"?><resources><string name="app_name">AbuAlZahra</string></resources>' > app/src/main/res/values/strings.xml
-          echo '<?xml version="1.0" encoding="utf-8"?><resources><style name="Theme.AbuAlZahra" parent="Theme.AppCompat.Light.NoActionBar"/></resources>' > app/src/main/res/values/styles.xml
-          
+          echo '<?xml version="1.0" encoding="utf-8"?><resources><style name="Theme.AbuAlZahra" parent="Theme.MaterialComponents.DayNight.NoActionBar"/></resources>' > app/src/main/res/values/styles.xml
+
+          # 8. ملف المانيفست
           cat <<EOF > app/src/main/AndroidManifest.xml
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
@@ -85,7 +103,7 @@ jobs:
           </manifest>
           EOF
 
-          # 6. كود MainActivity لفتح ملف Assets
+          # 9. كود MainActivity
           cat <<EOF > app/src/main/java/com/abualzahra/parent/MainActivity.kt
           package com.abualzahra.parent
           import android.os.Bundle
@@ -102,15 +120,16 @@ jobs:
           }
           EOF
 
+          # 10. استخدام إصدار محدد من Gradle لضمان الاستقرار
           gradle wrapper --gradle-version 8.2
 
-      - name: Build APK
+      - name: Build Final APK
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug
+          ./gradlew :app:assembleDebug
 
-      - name: Upload APK
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: AbuAlZahra-Asset-App
+          name: AbuAlZahra-App-Success
           path: app/build/outputs/apk/debug/*.apk
