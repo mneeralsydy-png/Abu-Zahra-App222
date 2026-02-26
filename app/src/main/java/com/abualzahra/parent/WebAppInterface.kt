@@ -6,6 +6,8 @@ import android.provider.Settings
 import android.webkit.JavascriptInterface
 import android.widget.Toast
 import org.json.JSONObject
+// هذا هو السطر المفقود الذي يسبب الخطأ:
+import com.abualzahra.parent.services.LocalSyncService
 
 class WebAppInterface(private val mContext: Context) {
 
@@ -37,14 +39,11 @@ class WebAppInterface(private val mContext: Context) {
 
     @JavascriptInterface
     fun startBindingSession(code: String) {
-        // هنا يتم تجهيز الـ Local Server لاستقبال اتصال الطفل
-        // سيتم تنفيذ هذا في مرحلة الـ Networking المتقدمة
         showToast("جاري البحث عن الأجهزة المحلية... الكود: $code")
     }
 
     @JavascriptInterface
     fun sendCommand(cmd: String) {
-        // إرسال أمر للطفل عبر الـ Service
         val serviceIntent = Intent(mContext, LocalSyncService::class.java).apply {
             action = "SEND_COMMAND"
             putExtra("command", cmd)
