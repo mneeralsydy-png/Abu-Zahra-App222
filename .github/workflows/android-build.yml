@@ -1,9 +1,9 @@
-name: AbuAlZahra Ultimate Auto-Build
+name: AbuAlZahra Final Fix
 
 on:
   push:
     branches: [ "main" ]
-  workflow_dispatch: # يسمح لك بتشغيل البناء يدوياً
+  workflow_dispatch:
 
 jobs:
   build:
@@ -20,34 +20,39 @@ jobs:
         distribution: 'temurin'
         cache: gradle
 
-    - name: Full Project Reconstruction (Auto-Repair)
+    - name: Absolute Project Repair
       run: |
-        # 1. تنظيف شامل للمستودع قبل البدء
-        rm -rf app build.gradle settings.gradle gradlew gradlew.bat gradle
+        # 1. مسح شامل وإعادة بناء الهيكل
+        rm -rf app build.gradle settings.gradle gradlew gradlew.bat gradle .gradle
         mkdir -p app/src/main/res/values
         mkdir -p app/src/main/java/com/abualzahra/parent
-        mkdir -p app/src/main/assets
 
-        # 2. إنشاء ملف الإعدادات (Settings)
+        # 2. ملف الإعدادات
         echo "include ':app'" > settings.gradle
 
-        # 3. إنشاء ملف البناء الرئيسي (Root Build Gradle) مع تعريف الإصدارات
+        # 3. ملف البناء الرئيسي (Root)
         cat <<EOF > build.gradle
         buildscript {
             repositories { google(); mavenCentral() }
-            dependencies { classpath 'com.android.tools.build:gradle:8.2.0'; classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.0" }
+            dependencies { 
+                classpath 'com.android.tools.build:gradle:8.2.0'
+                classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.0'
+            }
         }
         allprojects { repositories { google(); mavenCentral() } }
         EOF
 
-        # 4. إنشاء ملف بناء التطبيق (App Build Gradle)
+        # 4. ملف بناء التطبيق (App) - تم إصلاح مشكلة compileSdk هنا
         cat <<EOF > app/build.gradle
-        apply plugin: 'com.android.application'
-        apply plugin: 'kotlin-android'
+        plugins {
+            id 'com.android.application'
+            id 'kotlin-android'
+        }
 
         android {
             namespace 'com.abualzahra.parent'
             compileSdk 34
+
             defaultConfig {
                 applicationId "com.abualzahra.parent"
                 minSdk 24
@@ -55,25 +60,29 @@ jobs:
                 versionCode 1
                 versionName "1.0"
             }
-            buildTypes { release { minifyEnabled false } }
+
+            compileOptions {
+                sourceCompatibility JavaVersion.VERSION_17
+                targetCompatibility JavaVersion.VERSION_17
+            }
         }
+
         dependencies {
-            implementation 'androidx.core:core-ktx:1.12.0'
             implementation 'androidx.appcompat:appcompat:1.6.1'
             implementation 'com.google.android.material:material:1.11.0'
         }
         EOF
 
-        # 5. إنشاء ملفات الموارد (XML) بدون أخطاء Prolog
+        # 5. ملفات الموارد (XML)
         echo '<?xml version="1.0" encoding="utf-8"?><resources><string name="app_name">AbuAlZahra</string></resources>' > app/src/main/res/values/strings.xml
-        echo '<?xml version="1.0" encoding="utf-8"?><resources><style name="Theme.AbuAlZahra" parent="Theme.MaterialComponents.DayNight.NoActionBar"/></resources>' > app/src/main/res/values/styles.xml
+        echo '<?xml version="1.0" encoding="utf-8"?><resources><style name="Theme.AbuAlZahra" parent="Theme.AppCompat.Light.NoActionBar"/></resources>' > app/src/main/res/values/styles.xml
 
-        # 6. إنشاء ملف المانيفست (Manifest)
+        # 6. ملف المانيفست
         cat <<EOF > app/src/main/AndroidManifest.xml
         <?xml version="1.0" encoding="utf-8"?>
         <manifest xmlns:android="http://schemas.android.com/apk/res/android">
             <uses-permission android:name="android.permission.INTERNET" />
-            <application android:label="@string/app_name" android:theme="@style/Theme.AbuAlZahra" android:usesCleartextTraffic="true">
+            <application android:label="@string/app_name" android:theme="@style/Theme.AbuAlZahra">
                 <activity android:name=".MainActivity" android:exported="true">
                     <intent-filter>
                         <action android:name="android.intent.action.MAIN" />
@@ -84,7 +93,7 @@ jobs:
         </manifest>
         EOF
 
-        # 7. إنشاء كود التطبيق (MainActivity) - يقوم بفتح جوجل كمثال
+        # 7. كود MainActivity
         cat <<EOF > app/src/main/java/com/abualzahra/parent/MainActivity.kt
         package com.abualzahra.parent
         import android.os.Bundle
@@ -103,16 +112,16 @@ jobs:
         }
         EOF
 
-        # 8. توليد ملفات التشغيل (Gradle Wrapper)
+        # 8. توليد الجرادل بنسخة مستقرة
         gradle wrapper --gradle-version 8.2
 
-    - name: Build Android APK
+    - name: Final Build Execution
       run: |
         chmod +x gradlew
-        ./gradlew assembleDebug
+        ./gradlew assembleDebug --stacktrace
 
-    - name: Upload Final APK
+    - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
         name: AbuAlZahra-Final-App
-        path: app/build/outputs/apk/debug/*.apk
+        path: "app/build/outputs/apk/debug/*.apk"
