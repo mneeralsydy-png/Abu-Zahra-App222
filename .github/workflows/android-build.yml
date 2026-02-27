@@ -1,4 +1,4 @@
-name: Android CI Build (Logic Fixed)
+name: Android CI Build (Production Stable)
 
 on:
   push:
@@ -17,8 +17,8 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    # === إنشاء جميع الملفات مع منطق التشغيل الصحيح ===
-    - name: Generate All Files with Logic
+    # === إنشاء ملفات المشروع الكاملة والمحسنة ===
+    - name: Generate Production Files
       run: |
         # إنشاء المجلدات
         mkdir -p app/src/main/assets
@@ -27,12 +27,23 @@ jobs:
         mkdir -p app/src/main/res/layout
         mkdir -p app/src/main/java/com/abuzahra/manager
         
-        # 1. AndroidManifest.xml (نظيف)
+        # 1. AndroidManifest.xml (طلب الأذونات)
         cat > app/src/main/AndroidManifest.xml << 'EOF'
         <?xml version="1.0" encoding="utf-8"?>
         <manifest xmlns:android="http://schemas.android.com/apk/res/android"
             xmlns:tools="http://schemas.android.com/tools">
+            
+            <!-- الأذونات الأساسية -->
             <uses-permission android:name="android.permission.INTERNET" />
+            <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+            
+            <!-- أذونات خطيرة (تطلب وقت التشغيل) -->
+            <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+            <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+            <uses-permission android:name="android.permission.CAMERA" />
+            <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+            <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+            
             <application
                 android:allowBackup="true"
                 android:icon="@android:drawable/ic_menu_manage"
@@ -92,7 +103,7 @@ jobs:
         echo "<?xml version=\"1.0\" encoding=\"utf-8\"?><data-extraction-rules><cloud-backup><include domain=\"sharedpref\" path=\".\"/></cloud-backup></data-extraction-rules>" > app/src/main/res/xml/data_extraction_rules.xml
         echo "<?xml version=\"1.0\" encoding=\"utf-8\"?><RelativeLayout xmlns:android=\"http://schemas.android.com/apk/res/android\" android:layout_width=\"match_parent\" android:layout_height=\"match_parent\" android:background=\"#0F172A\"><WebView android:id=\"@+id/webview\" android:layout_width=\"match_parent\" android:layout_height=\"match_parent\" /></RelativeLayout>" > app/src/main/res/layout/activity_main.xml
 
-        # 4. HTML (تم إصلاح منطق البداية)
+        # 4. HTML (محمي من التعليق)
         cat > app/src/main/assets/index.html << 'HTMLEOF'
         <!DOCTYPE html>
         <html lang="ar" dir="rtl">
@@ -104,14 +115,10 @@ jobs:
             <style>body{font-family:'Tajawal',sans-serif;background-color:#0F172A;color:#fff}.screen{display:none;position:fixed;inset:0;flex-direction:column}.screen.active{display:flex}</style>
         </head>
         <body>
-            <!-- Splash Screen -->
             <div id="screen-splash" class="screen active items-center justify-center">
                 <h1 class="text-4xl text-blue-500">Abu Al-Zahra</h1>
                 <p class="mt-2">Loading...</p>
-                <div class="mt-4 w-6 h-6 border-2 border-blue-500 border-dashed rounded-full animate-spin"></div>
             </div>
-
-            <!-- Login Screen -->
             <div id="screen-login" class="screen items-center justify-center p-6">
                 <div class="w-full max-w-sm bg-slate-800 p-6 rounded-xl">
                     <h2 class="text-2xl mb-4 text-center">Login</h2>
@@ -122,8 +129,6 @@ jobs:
                     <p id="auth-error" class="text-red-400 text-xs mt-2 text-center hidden"></p>
                 </div>
             </div>
-
-            <!-- Binding Screen -->
             <div id="screen-binding" class="screen items-center justify-center p-6">
                 <div class="text-center">
                     <h2 class="text-xl mb-4">Binding Code</h2>
@@ -133,21 +138,21 @@ jobs:
                     <p class="text-gray-400 text-xs mt-2">Waiting for child device...</p>
                 </div>
             </div>
-
-            <!-- Main Screen -->
             <div id="screen-main" class="screen bg-slate-900">
                 <header class="p-4 bg-slate-800 flex justify-between"><h1 class="text-white">Dashboard</h1><span class="text-green-400 text-xs">Online</span></header>
                 <main class="p-4 flex-1"><div class="bg-slate-800 p-4 rounded-xl text-white">Child Device: <span id="txt-battery">85%</span></div></main>
             </div>
-
             <script>
-                function callNative(fn, arg){ if(typeof AndroidNative!=='undefined'){ arg ? AndroidNative[fn](arg) : AndroidNative[fn](); } else { console.log("Native not ready"); } }
+                function callNative(fn, arg){ 
+                    try { 
+                        if(typeof AndroidNative!=='undefined'){ arg ? AndroidNative[fn](arg) : AndroidNative[fn](); } 
+                    } catch(e) { console.log("Bridge Error: " + e); }
+                }
                 function showScreen(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
                 
                 function handleLogin(){ callNative('loginUser', JSON.stringify({email:document.getElementById('txt-email').value, pass:document.getElementById('txt-pass').value})); }
                 function handleRegister(){ callNative('registerUser', JSON.stringify({email:document.getElementById('txt-email').value, pass:document.getElementById('txt-pass').value})); }
                 
-                // Callbacks from Native
                 window.onAuthSuccess = function(uid){ 
                     showScreen('screen-binding'); 
                     const c=Math.floor(100000000+Math.random()*900000000).toString(); 
@@ -158,31 +163,38 @@ jobs:
                 window.onChildLinked = function(){ showScreen('screen-main'); };
                 window.showLoginScreen = function(){ showScreen('screen-login'); };
 
-                // === منطق البداية (Startup Logic) ===
-                // ننتظر ثانيتين ثم نطلب من النظام التحقق
-                setTimeout(function(){
-                    callNative('checkUserStatus');
-                }, 2000);
+                // بدء التشغيل
+                setTimeout(function(){ callNative('checkUserStatus'); }, 500);
             </script>
         </body>
         </html>
         HTMLEOF
 
-        # 5. Kotlin Files
-        
-        # MainActivity.kt
+        # 5. MainActivity.kt (محدث لطلب الأذونات)
         cat > app/src/main/java/com/abuzahra/manager/MainActivity.kt << 'EOF'
         package com.abuzahra.manager
+        import android.Manifest
+        import android.content.pm.PackageManager
+        import android.os.Build
         import android.os.Bundle
         import android.webkit.WebSettings
         import android.webkit.WebView
         import android.webkit.WebViewClient
         import androidx.appcompat.app.AppCompatActivity
+        import androidx.core.app.ActivityCompat
+        import androidx.core.content.ContextCompat
+
         class MainActivity : AppCompatActivity() {
             lateinit var webView: WebView
+            private val PERMISSIONS_REQUEST_CODE = 101
+
             override fun onCreate(savedInstanceState: Bundle?) {
                 super.onCreate(savedInstanceState)
                 setContentView(R.layout.activity_main)
+                
+                // طلب الأذونات عند البدء
+                requestDangerousPermissions()
+                
                 webView = findViewById(R.id.webview)
                 val webSettings: WebSettings = webView.settings
                 webSettings.javaScriptEnabled = true
@@ -192,13 +204,37 @@ jobs:
                 webView.webViewClient = WebViewClient()
                 webView.loadUrl("file:///android_asset/index.html")
             }
+
+            private fun requestDangerousPermissions() {
+                val permissionsNeeded = mutableListOf<String>()
+                
+                // قائمة الأذونات المطلوبة
+                val permissions = arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                    Manifest.permission.CAMERA,
+                    Manifest.permission.READ_EXTERNAL_STORAGE,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE
+                )
+
+                for (permission in permissions) {
+                    if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+                        permissionsNeeded.add(permission)
+                    }
+                }
+
+                if (permissionsNeeded.isNotEmpty()) {
+                    ActivityCompat.requestPermissions(this, permissionsNeeded.toTypedArray(), PERMISSIONS_REQUEST_CODE)
+                }
+            }
         }
         EOF
 
-        # WebAppInterface.kt (تمت إضافة دالة checkUserStatus)
+        # 6. WebAppInterface.kt (محمي ضد الانهيار)
         cat > app/src/main/java/com/abuzahra/manager/WebAppInterface.kt << 'EOF'
         package com.abuzahra.manager
         import android.content.Context
+        import android.util.Log
         import android.webkit.JavascriptInterface
         import com.google.firebase.auth.FirebaseAuth
         import com.google.firebase.firestore.FirebaseFirestore
@@ -207,51 +243,109 @@ jobs:
         import kotlinx.coroutines.launch
         import kotlinx.coroutines.tasks.await
         import org.json.JSONObject
+
         class WebAppInterface(private val mContext: Context) {
             private val auth = FirebaseAuth.getInstance()
             private val db = FirebaseFirestore.getInstance()
             private var listenerRegistration: com.google.firebase.firestore.ListenerRegistration? = null
+            private val TAG = "AbuZahraApp"
 
-            // دالة جديدة للتحقق عند بدء التشغيل
             @JavascriptInterface
             fun checkUserStatus() {
-                val user = auth.currentUser
-                if (user != null) {
-                    // المستخدم مسجل دخوله -> انتقل للوحة التحكم أو الربط
-                    sendResultToUI("window.onAuthSuccess('${user.uid}')")
-                } else {
-                    // لا يوجد مستخدم -> انتقل لشاشة الدخول
+                try {
+                    val user = auth.currentUser
+                    if (user != null) {
+                        sendResultToUI("window.onAuthSuccess('${user.uid}')")
+                    } else {
+                        sendResultToUI("window.showLoginScreen()")
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "CheckUser Error: ${e.message}")
                     sendResultToUI("window.showLoginScreen()")
                 }
             }
 
             @JavascriptInterface
             fun loginUser(jsonData: String) {
-                val data = JSONObject(jsonData); val email = data.getString("email"); val pass = data.getString("pass")
-                CoroutineScope(Dispatchers.IO).launch {
-                    try { auth.signInWithEmailAndPassword(email, pass).await(); sendResultToUI("window.onAuthSuccess('${auth.currentUser?.uid}')") }
-                    catch (e: Exception) { sendResultToUI("window.onAuthError('${e.message}')") }
+                try {
+                    val data = JSONObject(jsonData)
+                    val email = data.getString("email")
+                    val pass = data.getString("pass")
+                    CoroutineScope(Dispatchers.IO).launch {
+                        try {
+                            auth.signInWithEmailAndPassword(email, pass).await()
+                            sendResultToUI("window.onAuthSuccess('${auth.currentUser?.uid}')")
+                        } catch (e: Exception) {
+                            sendResultToUI("window.onAuthError('${e.message}')")
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Login Error: ${e.message}")
                 }
             }
+
             @JavascriptInterface
             fun registerUser(jsonData: String) {
-                val data = JSONObject(jsonData); val email = data.getString("email"); val pass = data.getString("pass")
-                CoroutineScope(Dispatchers.IO).launch {
-                    try { auth.createUserWithEmailAndPassword(email, pass).await(); sendResultToUI("window.onAuthSuccess('${auth.currentUser?.uid}')") }
-                    catch (e: Exception) { sendResultToUI("window.onAuthError('${e.message}')") }
+                try {
+                    val data = JSONObject(jsonData)
+                    val email = data.getString("email")
+                    val pass = data.getString("pass")
+                    CoroutineScope(Dispatchers.IO).launch {
+                        try {
+                            auth.createUserWithEmailAndPassword(email, pass).await()
+                            sendResultToUI("window.onAuthSuccess('${auth.currentUser?.uid}')")
+                        } catch (e: Exception) {
+                            sendResultToUI("window.onAuthError('${e.message}')")
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Register Error: ${e.message}")
                 }
             }
+
             @JavascriptInterface
             fun startListeningForChild(code: String) {
-                val uid = auth.currentUser?.uid ?: return
-                val codeRef = db.collection("linking_codes").document(code)
-                CoroutineScope(Dispatchers.IO).launch { codeRef.set(mapOf("parent_uid" to uid)).await() }
-                listenerRegistration = db.collection("parents").document(uid).collection("children").addSnapshotListener { snapshot, e ->
-                    if (e != null || snapshot == null) return@addSnapshotListener
-                    if (!snapshot.isEmpty) { listenerRegistration?.remove(); sendResultToUI("window.onChildLinked()") }
+                try {
+                    val uid = auth.currentUser?.uid
+                    if (uid == null) {
+                        sendResultToUI("window.onAuthError('User not logged in')")
+                        return
+                    }
+
+                    val codeRef = db.collection("linking_codes").document(code)
+                    CoroutineScope(Dispatchers.IO).launch {
+                        try {
+                            codeRef.set(mapOf("parent_uid" to uid)).await()
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Firestore Set Error: ${e.message}")
+                        }
+                    }
+
+                    listenerRegistration = db.collection("parents").document(uid).collection("children")
+                        .addSnapshotListener { snapshot, e ->
+                            if (e != null) {
+                                Log.e(TAG, "Snapshot Error: ${e.message}")
+                                return@addSnapshotListener
+                            }
+                            if (snapshot != null && !snapshot.isEmpty) {
+                                listenerRegistration?.remove()
+                                sendResultToUI("window.onChildLinked()")
+                            }
+                        }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Binding Error: ${e.message}")
                 }
             }
-            private fun sendResultToUI(jsCode: String) { CoroutineScope(Dispatchers.Main).launch { (mContext as MainActivity).webView.evaluateJavascript(jsCode, null) } }
+
+            private fun sendResultToUI(jsCode: String) {
+                CoroutineScope(Dispatchers.Main).launch {
+                    try {
+                        (mContext as MainActivity).webView.evaluateJavascript(jsCode, null)
+                    } catch (e: Exception) {
+                        Log.e(TAG, "UI Update Error: ${e.message}")
+                    }
+                }
+            }
         }
         EOF
 
@@ -267,5 +361,5 @@ jobs:
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
-        name: AbuAlZahra-Parent-App
+        name: AbuAlZahra-Parent-App-v2
         path: app/build/outputs/apk/debug/app-debug.apk
