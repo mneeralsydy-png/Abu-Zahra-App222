@@ -8,7 +8,8 @@ import androidx.appcompat.app.AppCompatActivity
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var webView: WebView
+    // تم إزالة private ليصبح public ويمكن لـ WebAppInterface الوصول إليه
+    lateinit var webView: WebView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -24,7 +25,6 @@ class MainActivity : AppCompatActivity() {
         webSettings.domStorageEnabled = true
         webSettings.databaseEnabled = true
         
-        // السماح بالوصول للملفات والأصول
         webSettings.allowFileAccess = true
         webSettings.allowContentAccess = true
 
