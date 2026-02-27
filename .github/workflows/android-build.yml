@@ -1,4 +1,4 @@
-name: Android CI Build (Ultimate Fix)
+name: Android CI Build (Logic Fixed)
 
 on:
   push:
@@ -17,23 +17,22 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    # === خطوة واحدة شاملة: إنشاء جميع الملفات المصححة ===
-    - name: Generate All Files & Fix Manifest
+    # === إنشاء جميع الملفات مع منطق التشغيل الصحيح ===
+    - name: Generate All Files with Logic
       run: |
-        # إنشاء المجلدات المطلوبة
+        # إنشاء المجلدات
         mkdir -p app/src/main/assets
         mkdir -p app/src/main/res/values
         mkdir -p app/src/main/res/xml
         mkdir -p app/src/main/res/layout
         mkdir -p app/src/main/java/com/abuzahra/manager
-
-        # 1. إنشاء AndroidManifest.xml (نظيف وبدون متطلبات صور)
+        
+        # 1. AndroidManifest.xml (نظيف)
         cat > app/src/main/AndroidManifest.xml << 'EOF'
         <?xml version="1.0" encoding="utf-8"?>
         <manifest xmlns:android="http://schemas.android.com/apk/res/android"
             xmlns:tools="http://schemas.android.com/tools">
             <uses-permission android:name="android.permission.INTERNET" />
-            <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
             <application
                 android:allowBackup="true"
                 android:icon="@android:drawable/ic_menu_manage"
@@ -47,7 +46,6 @@ jobs:
                     android:name=".MainActivity"
                     android:exported="true"
                     android:configChanges="orientation|screenSize|keyboardHidden"
-                    android:windowSoftInputMode="adjustResize"
                     android:theme="@style/Theme.Abualzahra">
                     <intent-filter>
                         <action android:name="android.intent.action.MAIN" />
@@ -58,7 +56,7 @@ jobs:
         </manifest>
         EOF
 
-        # 2. إنشاء google-services.json
+        # 2. google-services.json
         cat > app/google-services.json << 'EOF'
         {
           "project_info": {
@@ -78,7 +76,7 @@ jobs:
         }
         EOF
 
-        # 3. إنشاء ملفات الموارد (XML)
+        # 3. Resources
         echo "<resources><string name=\"app_name\">Abu Al-Zahra</string></resources>" > app/src/main/res/values/strings.xml
         cat > app/src/main/res/values/styles.xml << 'EOF'
         <resources>
@@ -94,7 +92,7 @@ jobs:
         echo "<?xml version=\"1.0\" encoding=\"utf-8\"?><data-extraction-rules><cloud-backup><include domain=\"sharedpref\" path=\".\"/></cloud-backup></data-extraction-rules>" > app/src/main/res/xml/data_extraction_rules.xml
         echo "<?xml version=\"1.0\" encoding=\"utf-8\"?><RelativeLayout xmlns:android=\"http://schemas.android.com/apk/res/android\" android:layout_width=\"match_parent\" android:layout_height=\"match_parent\" android:background=\"#0F172A\"><WebView android:id=\"@+id/webview\" android:layout_width=\"match_parent\" android:layout_height=\"match_parent\" /></RelativeLayout>" > app/src/main/res/layout/activity_main.xml
 
-        # 4. إنشاء ملف الواجهة (HTML)
+        # 4. HTML (تم إصلاح منطق البداية)
         cat > app/src/main/assets/index.html << 'HTMLEOF'
         <!DOCTYPE html>
         <html lang="ar" dir="rtl">
@@ -106,44 +104,72 @@ jobs:
             <style>body{font-family:'Tajawal',sans-serif;background-color:#0F172A;color:#fff}.screen{display:none;position:fixed;inset:0;flex-direction:column}.screen.active{display:flex}</style>
         </head>
         <body>
-            <div id="screen-splash" class="screen active items-center justify-center"><h1 class="text-4xl text-blue-500">Abu Al-Zahra</h1><p class="mt-2">Loading...</p></div>
+            <!-- Splash Screen -->
+            <div id="screen-splash" class="screen active items-center justify-center">
+                <h1 class="text-4xl text-blue-500">Abu Al-Zahra</h1>
+                <p class="mt-2">Loading...</p>
+                <div class="mt-4 w-6 h-6 border-2 border-blue-500 border-dashed rounded-full animate-spin"></div>
+            </div>
+
+            <!-- Login Screen -->
             <div id="screen-login" class="screen items-center justify-center p-6">
                 <div class="w-full max-w-sm bg-slate-800 p-6 rounded-xl">
                     <h2 class="text-2xl mb-4 text-center">Login</h2>
-                    <input id="txt-email" type="email" placeholder="Email" class="w-full bg-slate-700 p-3 rounded mb-2">
-                    <input id="txt-pass" type="password" placeholder="Password" class="w-full bg-slate-700 p-3 rounded mb-4">
-                    <button onclick="handleLogin()" class="w-full bg-blue-600 p-3 rounded">Login</button>
-                    <button onclick="handleRegister()" class="w-full bg-green-600 p-3 rounded mt-2">Register</button>
+                    <input id="txt-email" type="email" placeholder="Email" class="w-full bg-slate-700 p-3 rounded mb-2 text-white">
+                    <input id="txt-pass" type="password" placeholder="Password" class="w-full bg-slate-700 p-3 rounded mb-4 text-white">
+                    <button onclick="handleLogin()" class="w-full bg-blue-600 p-3 rounded text-white">Login</button>
+                    <button onclick="handleRegister()" class="w-full bg-green-600 p-3 rounded mt-2 text-white">Register</button>
                     <p id="auth-error" class="text-red-400 text-xs mt-2 text-center hidden"></p>
                 </div>
             </div>
+
+            <!-- Binding Screen -->
             <div id="screen-binding" class="screen items-center justify-center p-6">
                 <div class="text-center">
                     <h2 class="text-xl mb-4">Binding Code</h2>
                     <div class="bg-slate-800 p-4 rounded-xl border-2 border-green-500">
-                        <p id="display-code" class="text-3xl font-mono">000 000 000</p>
+                        <p id="display-code" class="text-3xl font-mono text-white">000 000 000</p>
                     </div>
                     <p class="text-gray-400 text-xs mt-2">Waiting for child device...</p>
                 </div>
             </div>
+
+            <!-- Main Screen -->
             <div id="screen-main" class="screen bg-slate-900">
-                <header class="p-4 bg-slate-800 flex justify-between"><h1>Dashboard</h1><span class="text-green-400 text-xs">Online</span></header>
-                <main class="p-4 flex-1"><div class="bg-slate-800 p-4 rounded-xl">Child Device: <span id="txt-battery">85%</span></div></main>
+                <header class="p-4 bg-slate-800 flex justify-between"><h1 class="text-white">Dashboard</h1><span class="text-green-400 text-xs">Online</span></header>
+                <main class="p-4 flex-1"><div class="bg-slate-800 p-4 rounded-xl text-white">Child Device: <span id="txt-battery">85%</span></div></main>
             </div>
+
             <script>
-                function callNative(fn, arg){ if(typeof AndroidNative!=='undefined'){ arg ? AndroidNative[fn](arg) : AndroidNative[fn](); } }
+                function callNative(fn, arg){ if(typeof AndroidNative!=='undefined'){ arg ? AndroidNative[fn](arg) : AndroidNative[fn](); } else { console.log("Native not ready"); } }
                 function showScreen(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+                
                 function handleLogin(){ callNative('loginUser', JSON.stringify({email:document.getElementById('txt-email').value, pass:document.getElementById('txt-pass').value})); }
                 function handleRegister(){ callNative('registerUser', JSON.stringify({email:document.getElementById('txt-email').value, pass:document.getElementById('txt-pass').value})); }
-                window.onAuthSuccess = function(uid){ showScreen('screen-binding'); const c=Math.floor(100000000+Math.random()*900000000).toString(); document.getElementById('display-code').innerText=c.substring(0,3)+" "+c.substring(3,6)+" "+c.substring(6); callNative('startListeningForChild', c); };
+                
+                // Callbacks from Native
+                window.onAuthSuccess = function(uid){ 
+                    showScreen('screen-binding'); 
+                    const c=Math.floor(100000000+Math.random()*900000000).toString(); 
+                    document.getElementById('display-code').innerText=c.substring(0,3)+" "+c.substring(3,6)+" "+c.substring(6); 
+                    callNative('startListeningForChild', c); 
+                };
                 window.onAuthError = function(msg){ document.getElementById('auth-error').innerText=msg; document.getElementById('auth-error').classList.remove('hidden'); };
                 window.onChildLinked = function(){ showScreen('screen-main'); };
+                window.showLoginScreen = function(){ showScreen('screen-login'); };
+
+                // === منطق البداية (Startup Logic) ===
+                // ننتظر ثانيتين ثم نطلب من النظام التحقق
+                setTimeout(function(){
+                    callNative('checkUserStatus');
+                }, 2000);
             </script>
         </body>
         </html>
         HTMLEOF
 
-        # 5. إنشاء ملفات Kotlin
+        # 5. Kotlin Files
+        
         # MainActivity.kt
         cat > app/src/main/java/com/abuzahra/manager/MainActivity.kt << 'EOF'
         package com.abuzahra.manager
@@ -169,7 +195,7 @@ jobs:
         }
         EOF
 
-        # WebAppInterface.kt
+        # WebAppInterface.kt (تمت إضافة دالة checkUserStatus)
         cat > app/src/main/java/com/abuzahra/manager/WebAppInterface.kt << 'EOF'
         package com.abuzahra.manager
         import android.content.Context
@@ -185,6 +211,20 @@ jobs:
             private val auth = FirebaseAuth.getInstance()
             private val db = FirebaseFirestore.getInstance()
             private var listenerRegistration: com.google.firebase.firestore.ListenerRegistration? = null
+
+            // دالة جديدة للتحقق عند بدء التشغيل
+            @JavascriptInterface
+            fun checkUserStatus() {
+                val user = auth.currentUser
+                if (user != null) {
+                    // المستخدم مسجل دخوله -> انتقل للوحة التحكم أو الربط
+                    sendResultToUI("window.onAuthSuccess('${user.uid}')")
+                } else {
+                    // لا يوجد مستخدم -> انتقل لشاشة الدخول
+                    sendResultToUI("window.showLoginScreen()")
+                }
+            }
+
             @JavascriptInterface
             fun loginUser(jsonData: String) {
                 val data = JSONObject(jsonData); val email = data.getString("email"); val pass = data.getString("pass")
@@ -215,7 +255,7 @@ jobs:
         }
         EOF
 
-    # === تثبيت Gradle والبناء ===
+    # === البناء ===
     - name: Install Gradle and Build
       run: |
         curl -L https://services.gradle.org/distributions/gradle-8.5-bin.zip -o gradle-8.5-bin.zip
