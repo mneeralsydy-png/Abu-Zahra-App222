@@ -1,4 +1,4 @@
-name: Android CI Build (Final Fix)
+name: Android CI Build (Final Solution)
 
 on:
   push:
@@ -17,17 +17,17 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    # === 1. توليد جميع الملفات الناقصة (Kotlin, XML, HTML, JSON) ===
-    - name: Generate All Project Files
+    # === خطوة واحدة لإصلاح كل شيء وإنشاء الملفات ===
+    - name: Generate All Files & Fix Errors
       run: |
-        # إنشاء المجلدات
+        # 1. إنشاء المجلدات
         mkdir -p app/src/main/assets
         mkdir -p app/src/main/res/values
         mkdir -p app/src/main/res/xml
         mkdir -p app/src/main/res/layout
         mkdir -p app/src/main/java/com/abuzahra/manager
         
-        # 1. google-services.json
+        # 2. إنشاء google-services.json
         cat > app/google-services.json << 'EOF'
         {
           "project_info": {
@@ -51,7 +51,7 @@ jobs:
         }
         EOF
 
-        # 2. Resources (XML)
+        # 3. إنشاء ملفات الموارد (XML)
         echo "<resources><string name=\"app_name\">Abu Al-Zahra</string></resources>" > app/src/main/res/values/strings.xml
         cat > app/src/main/res/values/styles.xml << 'EOF'
         <resources>
@@ -65,9 +65,9 @@ jobs:
         echo "<?xml version=\"1.0\" encoding=\"utf-8\"?><network-security-config><base-config cleartextTrafficPermitted=\"true\"><trust-anchors><certificates src=\"system\"/></trust-anchors></base-config></network-security-config>" > app/src/main/res/xml/network_security_config.xml
         echo "<?xml version=\"1.0\" encoding=\"utf-8\"?><full-backup-content><include domain=\"sharedpref\" path=\".\"/></full-backup-content>" > app/src/main/res/xml/backup_rules.xml
         echo "<?xml version=\"1.0\" encoding=\"utf-8\"?><data-extraction-rules><cloud-backup><include domain=\"sharedpref\" path=\".\"/></cloud-backup></data-extraction-rules>" > app/src/main/res/xml/data_extraction_rules.xml
-        echo "<?xml version=\"1.0\" encoding=\"utf-8\"?><RelativeLayout xmlns:android=\"http://schemas.android.com/apk/res/android\" android:layout_width=\"match_parent\" android:layout_height=\"match_parent\"><WebView android:id=\"@+id/webview\" android:layout_width=\"match_parent\" android:layout_height=\"match_parent\" /></RelativeLayout>" > app/src/main/res/layout/activity_main.xml
+        echo "<?xml version=\"1.0\" encoding=\"utf-8\"?><RelativeLayout xmlns:android=\"http://schemas.android.com/apk/res/android\" android:layout_width=\"match_parent\" android:layout_height=\"match_parent\" android:background=\"#0F172A\"><WebView android:id=\"@+id/webview\" android:layout_width=\"match_parent\" android:layout_height=\"match_parent\" /></RelativeLayout>" > app/src/main/res/layout/activity_main.xml
 
-        # 3. HTML Interface
+        # 4. إنشاء ملف الواجهة (HTML)
         cat > app/src/main/assets/index.html << 'HTMLEOF'
         <!DOCTYPE html>
         <html lang="ar" dir="rtl">
@@ -116,7 +116,8 @@ jobs:
         </html>
         HTMLEOF
 
-        # 4. Kotlin Files (MainActivity & Interface)
+        # 5. إنشاء ملفات Kotlin (مصححة بالكامل - بدون private)
+        # MainActivity.kt
         cat > app/src/main/java/com/abuzahra/manager/MainActivity.kt << 'EOF'
         package com.abuzahra.manager
         import android.os.Bundle
@@ -125,7 +126,7 @@ jobs:
         import android.webkit.WebViewClient
         import androidx.appcompat.app.AppCompatActivity
         class MainActivity : AppCompatActivity() {
-            lateinit var webView: WebView
+            lateinit var webView: WebView // تم إزالة private لحل مشكلة الوصول
             override fun onCreate(savedInstanceState: Bundle?) {
                 super.onCreate(savedInstanceState)
                 setContentView(R.layout.activity_main)
@@ -141,6 +142,7 @@ jobs:
         }
         EOF
 
+        # WebAppInterface.kt
         cat > app/src/main/java/com/abuzahra/manager/WebAppInterface.kt << 'EOF'
         package com.abuzahra.manager
         import android.content.Context
@@ -186,18 +188,13 @@ jobs:
         }
         EOF
 
-    # === 2. تثبيت Gradle 8.5 وتوليد Wrapper ===
-    - name: Install Gradle and Setup Wrapper
+    # === تثبيت Gradle والبناء ===
+    - name: Install Gradle and Build
       run: |
         curl -L https://services.gradle.org/distributions/gradle-8.5-bin.zip -o gradle-8.5-bin.zip
         unzip gradle-8.5-bin.zip
         export PATH=$PWD/gradle-8.5/bin:$PATH
         gradle wrapper
-      
-    # === 3. البناء ===
-    - name: Build APK
-      run: |
-        export PATH=$PWD/gradle-8.5/bin:$PATH
         ./gradlew :app:assembleDebug
       
     - name: Upload APK
