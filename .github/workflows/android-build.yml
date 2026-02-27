@@ -39,11 +39,17 @@ jobs:
         echo '<?xml version="1.0" encoding="utf-8"?><full-backup-content></full-backup-content>' > app/src/main/res/xml/backup_rules.xml
         echo '<?xml version="1.0" encoding="utf-8"?><data-extraction-rules></data-extraction-rules>' > app/src/main/res/xml/data_extraction_rules.xml
 
-        # إنشاء أيقونة وهمية إذا كانت ic_launcher مفقودة (لتجنب خطأ AAPT)
+        # إنشاء أيقونة وهمية إذا كانت مفقودة (لتجنب خطأ AAPT)
         touch app/src/main/res/mipmap-hdpi/ic_launcher.png
         touch app/src/main/res/mipmap-hdpi/ic_launcher_round.png
 
-    # 2. حقن ملف google-services.json
+    # 2. خطوة استخراج مفاتيح SHA1 لربط Firebase (مهمة جداً)
+    - name: Extract SHA1 and SHA256
+      run: |
+        echo "تنبيه: سيتم عرض مفاتيح البصمة بالأسفل، انسخ SHA1 وضعها في Firebase"
+        keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android | grep -E "SHA1|SHA256"
+
+    # 3. حقن ملف google-services.json
     - name: Inject Google Services JSON
       run: |
         mkdir -p app
@@ -73,14 +79,14 @@ jobs:
         }
         EOF
 
-    # 3. تثبيت Gradle وتصحيح الصلاحيات
+    # 4. تثبيت Gradle 8.5
     - name: Install Gradle 8.5
       run: |
         curl -L https://services.gradle.org/distributions/gradle-8.5-bin.zip -o gradle-8.5-bin.zip
         unzip gradle-8.5-bin.zip
         echo "$PWD/gradle-8.5/bin" >> $GITHUB_PATH
 
-    # 4. محاولة البناء مع تنظيف تلقائي (Clean Build)
+    # 5. بناء التطبيق
     - name: Build Project
       run: |
         gradle clean
@@ -90,5 +96,5 @@ jobs:
       if: success()
       uses: actions/upload-artifact@v4
       with:
-        name: AbuAlZahra-Final-App
+        name: AbuAlZahra-Build-with-SHA
         path: app/build/outputs/apk/debug/app-debug.apk
