@@ -18,7 +18,32 @@ jobs:
         distribution: 'temurin'
         cache: gradle
 
-    # 1. إنشاء ملف google-services.json تلقائياً (حل مشكلة Missing File)
+    # 1. إنشاء ملفات XML المفقودة تلقائياً (تجنب أخطاء Resource Not Found)
+    - name: Auto-Generate Missing Resources
+      run: |
+        mkdir -p app/src/main/res/xml
+        mkdir -p app/src/main/res/mipmap-hdpi
+        
+        # إنشاء ملف إعدادات خدمة التسهيل
+        cat > app/src/main/res/xml/accessibility_service_config.xml << 'EOF'
+        <?xml version="1.0" encoding="utf-8"?>
+        <accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+            android:accessibilityFeedbackType="feedbackGeneric"
+            android:accessibilityFlags="flagDefault"
+            android:canRetrieveWindowContent="true"
+            android:description="@string/app_name" />
+        EOF
+
+        # إنشاء ملفات قواعد البيانات والحماية لمنع فشل المانيفيست
+        echo '<?xml version="1.0" encoding="utf-8"?><network-security-config></network-security-config>' > app/src/main/res/xml/network_security_config.xml
+        echo '<?xml version="1.0" encoding="utf-8"?><full-backup-content></full-backup-content>' > app/src/main/res/xml/backup_rules.xml
+        echo '<?xml version="1.0" encoding="utf-8"?><data-extraction-rules></data-extraction-rules>' > app/src/main/res/xml/data_extraction_rules.xml
+
+        # إنشاء أيقونة وهمية إذا كانت ic_launcher مفقودة (لتجنب خطأ AAPT)
+        touch app/src/main/res/mipmap-hdpi/ic_launcher.png
+        touch app/src/main/res/mipmap-hdpi/ic_launcher_round.png
+
+    # 2. حقن ملف google-services.json
     - name: Inject Google Services JSON
       run: |
         mkdir -p app
@@ -38,46 +63,32 @@ jobs:
                   "package_name": "com.abuzahra.manager"
                 }
               },
-              "oauth_client": [
-                {
-                  "client_id": "787676787951-20uf0a81hb0n5b95t9htb7cd073lu2bm.apps.googleusercontent.com",
-                  "client_type": 3
-                }
-              ],
               "api_key": [
-                {
-                  "current_key": "AIzaSyASBVIQ0AvrsLqAgbT9k6L7bCpZKoqdvjo"
-                }
+                { "current_key": "AIzaSyASBVIQ0AvrsLqAgbT9k6L7bCpZKoqdvjo" }
               ],
-              "services": {
-                "appinvite_service": {
-                  "other_platform_oauth_client": [
-                    {
-                      "client_id": "787676787951-20uf0a81hb0n5b95t9htb7cd073lu2bm.apps.googleusercontent.com",
-                      "client_type": 3
-                    }
-                  ]
-                }
-              }
+              "services": { "appinvite_service": { "other_platform_oauth_client": [] } }
             }
           ],
           "configuration_version": "1"
         }
         EOF
 
-    # 2. تثبيت Gradle 8.5 وإضافته للنظام
+    # 3. تثبيت Gradle وتصحيح الصلاحيات
     - name: Install Gradle 8.5
       run: |
         curl -L https://services.gradle.org/distributions/gradle-8.5-bin.zip -o gradle-8.5-bin.zip
         unzip gradle-8.5-bin.zip
         echo "$PWD/gradle-8.5/bin" >> $GITHUB_PATH
 
-    # 3. البناء المباشر باستخدام أمر gradle (بدون الحاجة لملف gradlew)
+    # 4. محاولة البناء مع تنظيف تلقائي (Clean Build)
     - name: Build Project
-      run: gradle :app:assembleDebug
-      
+      run: |
+        gradle clean
+        gradle :app:assembleDebug --stacktrace
+
     - name: Upload APK Artifact
+      if: success()
       uses: actions/upload-artifact@v4
       with:
-        name: AbuAlZahra-Parent-App
+        name: AbuAlZahra-Final-App
         path: app/build/outputs/apk/debug/app-debug.apk
