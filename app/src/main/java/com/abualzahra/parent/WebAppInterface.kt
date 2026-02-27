@@ -15,7 +15,6 @@ class WebAppInterface(private val mContext: Context) {
     private val db = FirebaseFirestore.getInstance()
     private var listenerRegistration: com.google.firebase.firestore.ListenerRegistration? = null
 
-    // 1. تسجيل الدخول
     @JavascriptInterface
     fun loginUser(jsonData: String) {
         val data = JSONObject(jsonData)
@@ -35,7 +34,6 @@ class WebAppInterface(private val mContext: Context) {
         }
     }
 
-    // 2. إنشاء حساب
     @JavascriptInterface
     fun registerUser(jsonData: String) {
         val data = JSONObject(jsonData)
@@ -55,7 +53,6 @@ class WebAppInterface(private val mContext: Context) {
         }
     }
 
-    // 3. توليد كود الربط والاستماع للطفل
     @JavascriptInterface
     fun startListeningForChild(code: String) {
         val uid = auth.currentUser?.uid ?: return
@@ -84,7 +81,6 @@ class WebAppInterface(private val mContext: Context) {
                 listenerRegistration?.remove()
                 sendResultToUI("window.onChildLinked()")
                 
-                // بدء الاستماع لتحديثات البطارية
                 val deviceId = snapshot.documents[0].id
                 startListeningForUpdates(uid, deviceId)
             }
@@ -103,9 +99,9 @@ class WebAppInterface(private val mContext: Context) {
         }
     }
 
-    // دالة مساعدة لإرسال الأوامر للواجهة
     private fun sendResultToUI(jsCode: String) {
         CoroutineScope(Dispatchers.Main).launch {
+            // الوصول للـ webView أصبح ممكناً لأننا أزلنا private
             (mContext as MainActivity).webView.evaluateJavascript(jsCode, null)
         }
     }
