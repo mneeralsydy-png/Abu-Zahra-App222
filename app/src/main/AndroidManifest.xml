@@ -1,15 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
+<manifest xmlns:android="[http://schemas.android.com/apk/res/android](http://schemas.android.com/apk/res/android)"
+    xmlns:tools="[http://schemas.android.com/tools](http://schemas.android.com/tools)">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-    
-    <!-- صلاحيات الموقع -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
-    
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" 
@@ -31,15 +29,13 @@
             android:name=".MainActivity"
             android:exported="true"
             android:configChanges="orientation|screenSize|keyboardHidden"
-            android:windowSoftInputMode="adjustResize"
-            android:theme="@style/Theme.Abualzahra">
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         
-        <!-- خدمات النظام -->
         <service
             android:name=".services.MyAccessibilityService"
             android:exported="true"
@@ -61,8 +57,9 @@
             </intent-filter>
         </service>
         
-        <service android:name=".services.LocalSyncService" android:exported="false" />
+        <service 
+            android:name=".services.LocalSyncService" 
+            android:exported="false" />
 
     </application>
 </manifest>
-```بعد تعديل ملف `AndroidManifest.xml` وتشغيل البناء، إذا ظهر الخطأ مرة أخرى، يرجى إرسال لي رسالة الخطأ الكاملة.
