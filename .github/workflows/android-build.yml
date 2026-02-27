@@ -1,4 +1,4 @@
-name: Android CI Build (Full Auto-Fix)
+name: Android CI Build (Final Fix)
 
 on:
   push:
@@ -17,21 +17,17 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    # ==========================================================
-    # === خطوة إنشاء جميع الملفات الناقصة تلقائياً (Auto-Generate) ===
-    # ==========================================================
-    
-    - name: Generate All Missing Files
+    # === 1. توليد جميع الملفات الناقصة (Kotlin, XML, HTML, JSON) ===
+    - name: Generate All Project Files
       run: |
-        
-        # 1. إنشاء مجلدات المشروع الأساسية
+        # إنشاء المجلدات
         mkdir -p app/src/main/assets
         mkdir -p app/src/main/res/values
         mkdir -p app/src/main/res/xml
         mkdir -p app/src/main/res/layout
         mkdir -p app/src/main/java/com/abuzahra/manager
         
-        # 2. إنشاء ملف google-services.json (بياناتك المقدمة)
+        # 1. google-services.json
         cat > app/google-services.json << 'EOF'
         {
           "project_info": {
@@ -44,246 +40,96 @@ jobs:
             {
               "client_info": {
                 "mobilesdk_app_id": "1:787676787951:android:78bb939f7ab24b0494171a",
-                "android_client_info": {
-                  "package_name": "com.abuzahra.manager"
-                }
+                "android_client_info": { "package_name": "com.abuzahra.manager" }
               },
-              "oauth_client": [
-                {
-                  "client_id": "787676787951-20uf0a81hb0n5b95t9htb7cd073lu2bm.apps.googleusercontent.com",
-                  "client_type": 3
-                }
-              ],
-              "api_key": [
-                {
-                  "current_key": "AIzaSyASBVIQ0AvrsLqAgbT9k6L7bCpZKoqdvjo"
-                }
-              ],
-              "services": {
-                "appinvite_service": {
-                  "other_platform_oauth_client": [
-                    {
-                      "client_id": "787676787951-20uf0a81hb0n5b95t9htb7cd073lu2bm.apps.googleusercontent.com",
-                      "client_type": 3
-                    }
-                  ]
-                }
-              }
+              "oauth_client": [ { "client_id": "787676787951-20uf0a81hb0n5b95t9htb7cd073lu2bm.apps.googleusercontent.com", "client_type": 3 } ],
+              "api_key": [ { "current_key": "AIzaSyASBVIQ0AvrsLqAgbT9k6L7bCpZKoqdvjo" } ],
+              "services": { "appinvite_service": { "other_platform_oauth_client": [ { "client_id": "787676787951-20uf0a81hb0n5b95t9htb7cd073lu2bm.apps.googleusercontent.com", "client_type": 3 } ] } }
             }
           ],
           "configuration_version": "1"
         }
         EOF
 
-        # 3. إنشاء ملفات الموارد (XML Resources)
-        cat > app/src/main/res/values/strings.xml << 'EOF'
-        <resources>
-            <string name="app_name">Abu Al-Zahra</string>
-        </resources>
-        EOF
-
+        # 2. Resources (XML)
+        echo "<resources><string name=\"app_name\">Abu Al-Zahra</string></resources>" > app/src/main/res/values/strings.xml
         cat > app/src/main/res/values/styles.xml << 'EOF'
         <resources>
             <style name="Theme.Abualzahra" parent="Theme.MaterialComponents.DayNight.NoActionBar">
                 <item name="colorPrimary">#2563EB</item>
                 <item name="android:statusBarColor">#0F172A</item>
-                <item name="android:navigationBarColor">#0F172A</item>
                 <item name="android:windowBackground">#0F172A</item>
             </style>
         </resources>
         EOF
+        echo "<?xml version=\"1.0\" encoding=\"utf-8\"?><network-security-config><base-config cleartextTrafficPermitted=\"true\"><trust-anchors><certificates src=\"system\"/></trust-anchors></base-config></network-security-config>" > app/src/main/res/xml/network_security_config.xml
+        echo "<?xml version=\"1.0\" encoding=\"utf-8\"?><full-backup-content><include domain=\"sharedpref\" path=\".\"/></full-backup-content>" > app/src/main/res/xml/backup_rules.xml
+        echo "<?xml version=\"1.0\" encoding=\"utf-8\"?><data-extraction-rules><cloud-backup><include domain=\"sharedpref\" path=\".\"/></cloud-backup></data-extraction-rules>" > app/src/main/res/xml/data_extraction_rules.xml
+        echo "<?xml version=\"1.0\" encoding=\"utf-8\"?><RelativeLayout xmlns:android=\"http://schemas.android.com/apk/res/android\" android:layout_width=\"match_parent\" android:layout_height=\"match_parent\"><WebView android:id=\"@+id/webview\" android:layout_width=\"match_parent\" android:layout_height=\"match_parent\" /></RelativeLayout>" > app/src/main/res/layout/activity_main.xml
 
-        cat > app/src/main/res/xml/network_security_config.xml << 'EOF'
-        <?xml version="1.0" encoding="utf-8"?>
-        <network-security-config>
-            <base-config cleartextTrafficPermitted="true">
-                <trust-anchors>
-                    <certificates src="system"/>
-                </trust-anchors>
-            </base-config>
-        </network-security-config>
-        EOF
-
-        cat > app/src/main/res/xml/backup_rules.xml << 'EOF'
-        <?xml version="1.0" encoding="utf-8"?>
-        <full-backup-content>
-            <include domain="sharedpref" path="."/>
-        </full-backup-content>
-        EOF
-
-        cat > app/src/main/res/xml/data_extraction_rules.xml << 'EOF'
-        <?xml version="1.0" encoding="utf-8"?>
-        <data-extraction-rules>
-            <cloud-backup>
-                <include domain="sharedpref" path="."/>
-            </cloud-backup>
-        </data-extraction-rules>
-        EOF
-
-        # 4. إنشاء ملف الواجهة (HTML)
-        # (لقد دمجت كود index.html هنا ليتم إنشاؤه تلقائياً)
+        # 3. HTML Interface
         cat > app/src/main/assets/index.html << 'HTMLEOF'
         <!DOCTYPE html>
         <html lang="ar" dir="rtl">
         <head>
             <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-            <title>Abu Al-Zahra Parent</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <script src="https://cdn.tailwindcss.com"></script>
-            <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
-            <style>
-                body { font-family: 'Tajawal', sans-serif; background-color: #0F172A; color: #E2E8F0; }
-                .screen { display: none; position: fixed; inset: 0; flex-direction: column; }
-                .screen.active { display: flex; }
-                .golden-text-title { font-family: 'Amiri', serif; background: linear-gradient(45deg, #bf953f, #fcf6ba, #b38728); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-            </style>
+            <link href="https://fonts.googleapis.com/css2?family=Tajawal&display=swap" rel="stylesheet">
+            <style>body{font-family:'Tajawal',sans-serif;background-color:#0F172A;color:#fff}.screen{display:none;position:fixed;inset:0;flex-direction:column}.screen.active{display:flex}</style>
         </head>
         <body>
-            <!-- 1. Splash -->
-            <div id="screen-splash" class="screen active items-center justify-center bg-[#0F172A]">
-                <h1 class="text-7xl golden-text-title">Abu Al-Zahra</h1>
-                <div class="mt-8 w-8 h-8 border-4 border-blue-500 border-dashed rounded-full animate-spin"></div>
-            </div>
-
-            <!-- 2. Login -->
-            <div id="screen-login" class="screen items-center justify-center bg-[#0F172A] p-6">
-                <div class="w-full max-w-sm text-center space-y-6">
-                    <h2 class="text-4xl golden-text-title">مرحباً</h2>
-                    <div class="glass-panel rounded-2xl p-6 space-y-3 bg-slate-800 border border-slate-700">
-                        <input id="txt-email" type="email" placeholder="البريد الإلكتروني" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm">
-                        <input id="txt-pass" type="password" placeholder="كلمة المرور" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm">
-                        <button onclick="handleLogin()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold">دخول</button>
-                        <button onclick="handleRegister()" class="w-full bg-green-600 text-white py-3 rounded-xl font-bold">إنشاء حساب</button>
-                        <p id="auth-error" class="text-red-400 text-xs hidden"></p>
-                    </div>
+            <div id="screen-splash" class="screen active items-center justify-center"><h1 class="text-4xl text-blue-500">Abu Al-Zahra</h1><p class="mt-2">Loading...</p></div>
+            <div id="screen-login" class="screen items-center justify-center p-6">
+                <div class="w-full max-w-sm bg-slate-800 p-6 rounded-xl">
+                    <h2 class="text-2xl mb-4 text-center">Login</h2>
+                    <input id="txt-email" type="email" placeholder="Email" class="w-full bg-slate-700 p-3 rounded mb-2">
+                    <input id="txt-pass" type="password" placeholder="Password" class="w-full bg-slate-700 p-3 rounded mb-4">
+                    <button onclick="handleLogin()" class="w-full bg-blue-600 p-3 rounded">Login</button>
+                    <button onclick="handleRegister()" class="w-full bg-green-600 p-3 rounded mt-2">Register</button>
+                    <p id="auth-error" class="text-red-400 text-xs mt-2 text-center hidden"></p>
                 </div>
             </div>
-
-            <!-- 3. Binding -->
-            <div id="screen-binding" class="screen items-center justify-center bg-[#0F172A] p-6">
-                <div class="text-center w-full max-w-sm">
-                    <h2 class="text-2xl text-white font-bold mb-2">ربط جهاز جديد</h2>
-                    <p class="text-gray-400 text-sm mb-6">أدخل الكود في تطبيق الطفل</p>
-                    <div class="bg-slate-800 border-2 border-green-500 p-4 rounded-xl mb-6">
-                        <p id="display-code" class="text-4xl font-mono text-white font-bold">000 000 000</p>
+            <div id="screen-binding" class="screen items-center justify-center p-6">
+                <div class="text-center">
+                    <h2 class="text-xl mb-4">Binding Code</h2>
+                    <div class="bg-slate-800 p-4 rounded-xl border-2 border-green-500">
+                        <p id="display-code" class="text-3xl font-mono">000 000 000</p>
                     </div>
-                    <p id="bind-status" class="text-xs text-gray-500">في انتظار الاتصال...</p>
+                    <p class="text-gray-400 text-xs mt-2">Waiting for child device...</p>
                 </div>
             </div>
-
-            <!-- 4. Dashboard -->
-            <div id="screen-main" class="screen bg-[#0F172A]">
-                <header class="bg-slate-900/80 border-b p-4 flex justify-between items-center shrink-0">
-                    <h1 class="text-lg font-bold text-white">Abu <span class="golden-text-title">Al-Zahra</span></h1>
-                    <span class="text-xs text-green-400 bg-green-500/10 px-2 py-1 rounded-full">متصل</span>
-                </header>
-                <main class="flex-1 p-4">
-                    <div class="bg-slate-800 rounded-2xl p-4 mb-4 flex items-center gap-4">
-                        <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">S</div>
-                        <div class="flex-1">
-                            <h2 class="font-bold text-white">جهاز الطفل</h2>
-                            <span id="txt-battery" class="text-gray-400 text-xs">85%</span>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-3 gap-3">
-                         <button class="bg-slate-800 rounded-xl p-3 h-24 flex flex-col items-center justify-center">
-                             <span class="text-2xl">📍</span>
-                             <span class="text-[10px] text-gray-200 mt-1">الموقع</span>
-                         </button>
-                         <button class="bg-slate-800 rounded-xl p-3 h-24 flex flex-col items-center justify-center">
-                             <span class="text-2xl">🔒</span>
-                             <span class="text-[10px] text-gray-200 mt-1">قفل</span>
-                         </button>
-                         <button class="bg-slate-800 rounded-xl p-3 h-24 flex flex-col items-center justify-center">
-                             <span class="text-2xl">📱</span>
-                             <span class="text-[10px] text-gray-200 mt-1">تطبيقات</span>
-                         </button>
-                    </div>
-                </main>
+            <div id="screen-main" class="screen bg-slate-900">
+                <header class="p-4 bg-slate-800 flex justify-between"><h1>Dashboard</h1><span class="text-green-400 text-xs">Online</span></header>
+                <main class="p-4 flex-1"><div class="bg-slate-800 p-4 rounded-xl">Child Device: <span id="txt-battery">85%</span></div></main>
             </div>
-
             <script>
-                function callNative(fn, arg) {
-                    if (typeof AndroidNative !== 'undefined') {
-                        if (arg) AndroidNative[fn](arg); else AndroidNative[fn]();
-                    }
-                }
-
-                function showScreen(id) {
-                    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-                    document.getElementById(id).classList.add('active');
-                }
-
-                function handleLogin() {
-                    const email = document.getElementById('txt-email').value;
-                    const pass = document.getElementById('txt-pass').value;
-                    if(!email || !pass) return;
-                    callNative('loginUser', JSON.stringify({email: email, pass: pass}));
-                }
-
-                function handleRegister() {
-                    const email = document.getElementById('txt-email').value;
-                    const pass = document.getElementById('txt-pass').value;
-                    if(!email || !pass) return;
-                    callNative('registerUser', JSON.stringify({email: email, pass: pass}));
-                }
-
-                window.onAuthSuccess = function(uid) {
-                    showScreen('screen-binding');
-                    const code = Math.floor(100000000 + Math.random() * 900000000);
-                    const formatted = code.toString().substring(0,3) + " " + code.toString().substring(3,6) + " " + code.toString().substring(6);
-                    document.getElementById('display-code').innerText = formatted;
-                    callNative('startListeningForChild', code.toString());
-                };
-
-                window.onAuthError = function(msg) {
-                    document.getElementById('auth-error').innerText = msg;
-                    document.getElementById('auth-error').classList.remove('hidden');
-                };
-
-                window.onChildLinked = function() {
-                    showScreen('screen-main');
-                };
+                function callNative(fn, arg){ if(typeof AndroidNative!=='undefined'){ arg ? AndroidNative[fn](arg) : AndroidNative[fn](); } }
+                function showScreen(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+                function handleLogin(){ callNative('loginUser', JSON.stringify({email:document.getElementById('txt-email').value, pass:document.getElementById('txt-pass').value})); }
+                function handleRegister(){ callNative('registerUser', JSON.stringify({email:document.getElementById('txt-email').value, pass:document.getElementById('txt-pass').value})); }
+                window.onAuthSuccess = function(uid){ showScreen('screen-binding'); const c=Math.floor(100000000+Math.random()*900000000).toString(); document.getElementById('display-code').innerText=c.substring(0,3)+" "+c.substring(3,6)+" "+c.substring(6); callNative('startListeningForChild', c); };
+                window.onAuthError = function(msg){ document.getElementById('auth-error').innerText=msg; document.getElementById('auth-error').classList.remove('hidden'); };
+                window.onChildLinked = function(){ showScreen('screen-main'); };
             </script>
         </body>
         </html>
         HTMLEOF
 
-        # 5. إنشاء ملف Layout
-        cat > app/src/main/res/layout/activity_main.xml << 'EOF'
-        <?xml version="1.0" encoding="utf-8"?>
-        <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="#0F172A">
-            <WebView
-                android:id="@+id/webview"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent" />
-        </RelativeLayout>
-        EOF
-
-        # 6. إنشاء ملفات Kotlin (مع إصلاح مشكلة private)
+        # 4. Kotlin Files (MainActivity & Interface)
         cat > app/src/main/java/com/abuzahra/manager/MainActivity.kt << 'EOF'
         package com.abuzahra.manager
-
         import android.os.Bundle
         import android.webkit.WebSettings
         import android.webkit.WebView
         import android.webkit.WebViewClient
         import androidx.appcompat.app.AppCompatActivity
-
         class MainActivity : AppCompatActivity() {
-            lateinit var webView: WebView // تم إزالة private لحل المشكلة
-
+            lateinit var webView: WebView
             override fun onCreate(savedInstanceState: Bundle?) {
                 super.onCreate(savedInstanceState)
                 setContentView(R.layout.activity_main)
                 webView = findViewById(R.id.webview)
-                setupWebView()
-            }
-
-            private fun setupWebView() {
                 val webSettings: WebSettings = webView.settings
                 webSettings.javaScriptEnabled = true
                 webSettings.domStorageEnabled = true
@@ -297,7 +143,6 @@ jobs:
 
         cat > app/src/main/java/com/abuzahra/manager/WebAppInterface.kt << 'EOF'
         package com.abuzahra.manager
-
         import android.content.Context
         import android.webkit.JavascriptInterface
         import com.google.firebase.auth.FirebaseAuth
@@ -307,81 +152,55 @@ jobs:
         import kotlinx.coroutines.launch
         import kotlinx.coroutines.tasks.await
         import org.json.JSONObject
-
         class WebAppInterface(private val mContext: Context) {
             private val auth = FirebaseAuth.getInstance()
             private val db = FirebaseFirestore.getInstance()
             private var listenerRegistration: com.google.firebase.firestore.ListenerRegistration? = null
-
             @JavascriptInterface
             fun loginUser(jsonData: String) {
-                val data = JSONObject(jsonData)
-                val email = data.getString("email")
-                val pass = data.getString("pass")
+                val data = JSONObject(jsonData); val email = data.getString("email"); val pass = data.getString("pass")
                 CoroutineScope(Dispatchers.IO).launch {
-                    try {
-                        auth.signInWithEmailAndPassword(email, pass).await()
-                        sendResultToUI("window.onAuthSuccess('${auth.currentUser?.uid}')")
-                    } catch (e: Exception) {
-                        sendResultToUI("window.onAuthError('${e.message}')")
-                    }
+                    try { auth.signInWithEmailAndPassword(email, pass).await(); sendResultToUI("window.onAuthSuccess('${auth.currentUser?.uid}')") }
+                    catch (e: Exception) { sendResultToUI("window.onAuthError('${e.message}')") }
                 }
             }
-
             @JavascriptInterface
             fun registerUser(jsonData: String) {
-                val data = JSONObject(jsonData)
-                val email = data.getString("email")
-                val pass = data.getString("pass")
+                val data = JSONObject(jsonData); val email = data.getString("email"); val pass = data.getString("pass")
                 CoroutineScope(Dispatchers.IO).launch {
-                    try {
-                        auth.createUserWithEmailAndPassword(email, pass).await()
-                        sendResultToUI("window.onAuthSuccess('${auth.currentUser?.uid}')")
-                    } catch (e: Exception) {
-                        sendResultToUI("window.onAuthError('${e.message}')")
-                    }
+                    try { auth.createUserWithEmailAndPassword(email, pass).await(); sendResultToUI("window.onAuthSuccess('${auth.currentUser?.uid}')") }
+                    catch (e: Exception) { sendResultToUI("window.onAuthError('${e.message}')") }
                 }
             }
-
             @JavascriptInterface
             fun startListeningForChild(code: String) {
                 val uid = auth.currentUser?.uid ?: return
                 val codeRef = db.collection("linking_codes").document(code)
-                val codeData = hashMapOf("parent_uid" to uid, "status" to "active")
-                CoroutineScope(Dispatchers.IO).launch { codeRef.set(codeData).await() }
-                
-                listenerRegistration = db.collection("parents").document(uid).collection("children")
-                    .addSnapshotListener { snapshot, e ->
-                        if (e != null || snapshot == null) return@addSnapshotListener
-                        if (!snapshot.isEmpty) {
-                            listenerRegistration?.remove()
-                            sendResultToUI("window.onChildLinked()")
-                        }
-                    }
-            }
-
-            private fun sendResultToUI(jsCode: String) {
-                CoroutineScope(Dispatchers.Main).launch {
-                    (mContext as MainActivity).webView.evaluateJavascript(jsCode, null)
+                CoroutineScope(Dispatchers.IO).launch { codeRef.set(mapOf("parent_uid" to uid)).await() }
+                listenerRegistration = db.collection("parents").document(uid).collection("children").addSnapshotListener { snapshot, e ->
+                    if (e != null || snapshot == null) return@addSnapshotListener
+                    if (!snapshot.isEmpty) { listenerRegistration?.remove(); sendResultToUI("window.onChildLinked()") }
                 }
             }
+            private fun sendResultToUI(jsCode: String) { CoroutineScope(Dispatchers.Main).launch { (mContext as MainActivity).webView.evaluateJavascript(jsCode, null) } }
         }
         EOF
 
-    # === البناء ===
-    - name: Install Gradle 8.5
+    # === 2. تثبيت Gradle 8.5 وتوليد Wrapper ===
+    - name: Install Gradle and Setup Wrapper
       run: |
         curl -L https://services.gradle.org/distributions/gradle-8.5-bin.zip -o gradle-8.5-bin.zip
         unzip gradle-8.5-bin.zip
-        echo "$PWD/gradle-8.5/bin" >> $GITHUB_PATH
-
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
+        export PATH=$PWD/gradle-8.5/bin:$PATH
+        gradle wrapper
       
-    - name: Build with Gradle
-      run: ./gradlew :app:assembleDebug
+    # === 3. البناء ===
+    - name: Build APK
+      run: |
+        export PATH=$PWD/gradle-8.5/bin:$PATH
+        ./gradlew :app:assembleDebug
       
-    - name: Upload APK Artifact
+    - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
         name: AbuAlZahra-Parent-App
