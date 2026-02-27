@@ -18,36 +18,27 @@ jobs:
         distribution: 'temurin'
         cache: gradle
 
-    # 1. إنشاء ملفات XML المفقودة تلقائياً (تجنب أخطاء Resource Not Found)
+    # 1. إنشاء المجلدات والملفات المفقودة لتجنب أخطاء AAPT
     - name: Auto-Generate Missing Resources
       run: |
         mkdir -p app/src/main/res/xml
         mkdir -p app/src/main/res/mipmap-hdpi
-        
-        # إنشاء ملف إعدادات خدمة التسهيل
-        cat > app/src/main/res/xml/accessibility_service_config.xml << 'EOF'
-        <?xml version="1.0" encoding="utf-8"?>
-        <accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
-            android:accessibilityFeedbackType="feedbackGeneric"
-            android:accessibilityFlags="flagDefault"
-            android:canRetrieveWindowContent="true"
-            android:description="@string/app_name" />
-        EOF
-
-        # إنشاء ملفات قواعد البيانات والحماية لمنع فشل المانيفيست
+        echo '<?xml version="1.0" encoding="utf-8"?><accessibility-service xmlns:android="http://schemas.android.com/apk/res/android" android:description="@string/app_name" />' > app/src/main/res/xml/accessibility_service_config.xml
         echo '<?xml version="1.0" encoding="utf-8"?><network-security-config></network-security-config>' > app/src/main/res/xml/network_security_config.xml
         echo '<?xml version="1.0" encoding="utf-8"?><full-backup-content></full-backup-content>' > app/src/main/res/xml/backup_rules.xml
         echo '<?xml version="1.0" encoding="utf-8"?><data-extraction-rules></data-extraction-rules>' > app/src/main/res/xml/data_extraction_rules.xml
+        # إنشاء أيقونات وهمية بصيغة PNG صحيحة (فارغة)
+        printf '\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\nIDATx\x9cc\x00\x01\x00\x00\x05\x00\x01\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82' > app/src/main/res/mipmap-hdpi/ic_launcher.png
+        cp app/src/main/res/mipmap-hdpi/ic_launcher.png app/src/main/res/mipmap-hdpi/ic_launcher_round.png
 
-        # إنشاء أيقونة وهمية إذا كانت مفقودة (لتجنب خطأ AAPT)
-        touch app/src/main/res/mipmap-hdpi/ic_launcher.png
-        touch app/src/main/res/mipmap-hdpi/ic_launcher_round.png
-
-    # 2. خطوة استخراج مفاتيح SHA1 لربط Firebase (مهمة جداً)
-    - name: Extract SHA1 and SHA256
+    # 2. إنشاء ملف Keystore وطباعة SHA1 (هذا سيحل الخطأ الظاهر في صورتك)
+    - name: Generate Debug Keystore and Extract SHA1
       run: |
-        echo "تنبيه: سيتم عرض مفاتيح البصمة بالأسفل، انسخ SHA1 وضعها في Firebase"
-        keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android | grep -E "SHA1|SHA256"
+        mkdir -p ~/.android
+        keytool -genkey -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+        echo "----------------- SHA1 Key Below -----------------"
+        keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android | grep "SHA1"
+        echo "--------------------------------------------------"
 
     # 3. حقن ملف google-services.json
     - name: Inject Google Services JSON
@@ -65,13 +56,9 @@ jobs:
             {
               "client_info": {
                 "mobilesdk_app_id": "1:787676787951:android:78bb939f7ab24b0494171a",
-                "android_client_info": {
-                  "package_name": "com.abuzahra.manager"
-                }
+                "android_client_info": { "package_name": "com.abuzahra.manager" }
               },
-              "api_key": [
-                { "current_key": "AIzaSyASBVIQ0AvrsLqAgbT9k6L7bCpZKoqdvjo" }
-              ],
+              "api_key": [{ "current_key": "AIzaSyASBVIQ0AvrsLqAgbT9k6L7bCpZKoqdvjo" }],
               "services": { "appinvite_service": { "other_platform_oauth_client": [] } }
             }
           ],
@@ -79,22 +66,19 @@ jobs:
         }
         EOF
 
-    # 4. تثبيت Gradle 8.5
+    # 4. تثبيت Gradle وبناء المشروع
     - name: Install Gradle 8.5
       run: |
         curl -L https://services.gradle.org/distributions/gradle-8.5-bin.zip -o gradle-8.5-bin.zip
         unzip gradle-8.5-bin.zip
         echo "$PWD/gradle-8.5/bin" >> $GITHUB_PATH
 
-    # 5. بناء التطبيق
     - name: Build Project
-      run: |
-        gradle clean
-        gradle :app:assembleDebug --stacktrace
+      run: gradle :app:assembleDebug
 
     - name: Upload APK Artifact
       if: success()
       uses: actions/upload-artifact@v4
       with:
-        name: AbuAlZahra-Build-with-SHA
+        name: AbuAlZahra-App
         path: app/build/outputs/apk/debug/app-debug.apk
