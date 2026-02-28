@@ -16,7 +16,16 @@ jobs:
       with:
         java-version: '17'
         distribution: 'temurin'
-        cache: gradle
+
+    # === الحل: استخدام Keystore ثابت ومخزن مؤقتاً ===
+    - name: Cache Debug Keystore
+      uses: actions/cache@v4
+      with:
+        path: ~/.android/debug.keystore
+        key: debug-keystore-parent-v1
+
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
 
     - name: Validate Configs
       run: |
@@ -41,6 +50,18 @@ jobs:
       
     - name: Build Debug APK
       run: ./gradlew :app:assembleDebug
+      
+    # === استخراج وطباعة SHA-1 بوضوح ===
+    - name: Extract SHA-1 Key
+      run: |
+        echo "============================================================"
+        echo "               🔥 FIREBASE SHA-1 KEY 🔥"
+        echo "============================================================"
+        # استخدام keytool لقراءة المفتاح من ملف الـ keystore مباشرة
+        keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android 2>/dev/null | grep "SHA1:"
+        echo "============================================================"
+        echo "Copy the text after 'SHA1:' above and add it to Firebase."
+        echo "============================================================"
       
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
