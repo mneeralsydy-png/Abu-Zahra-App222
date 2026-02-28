@@ -1,4 +1,4 @@
-name: Android CI Build (Production Stable)
+name: Android CI Build
 
 on:
   push:
@@ -16,350 +16,34 @@ jobs:
       with:
         java-version: '17'
         distribution: 'temurin'
+        cache: gradle
 
-    # === إنشاء ملفات المشروع الكاملة والمحسنة ===
-    - name: Generate Production Files
+    - name: Validate Configs
       run: |
-        # إنشاء المجلدات
-        mkdir -p app/src/main/assets
-        mkdir -p app/src/main/res/values
-        mkdir -p app/src/main/res/xml
-        mkdir -p app/src/main/res/layout
-        mkdir -p app/src/main/java/com/abuzahra/manager
-        
-        # 1. AndroidManifest.xml (طلب الأذونات)
-        cat > app/src/main/AndroidManifest.xml << 'EOF'
-        <?xml version="1.0" encoding="utf-8"?>
-        <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-            xmlns:tools="http://schemas.android.com/tools">
-            
-            <!-- الأذونات الأساسية -->
-            <uses-permission android:name="android.permission.INTERNET" />
-            <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-            
-            <!-- أذونات خطيرة (تطلب وقت التشغيل) -->
-            <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-            <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-            <uses-permission android:name="android.permission.CAMERA" />
-            <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-            <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-            
-            <application
-                android:allowBackup="true"
-                android:icon="@android:drawable/ic_menu_manage"
-                android:label="@string/app_name"
-                android:roundIcon="@android:drawable/ic_menu_manage"
-                android:supportsRtl="true"
-                android:theme="@style/Theme.Abualzahra"
-                android:networkSecurityConfig="@xml/network_security_config"
-                tools:targetApi="31">
-                <activity
-                    android:name=".MainActivity"
-                    android:exported="true"
-                    android:configChanges="orientation|screenSize|keyboardHidden"
-                    android:theme="@style/Theme.Abualzahra">
-                    <intent-filter>
-                        <action android:name="android.intent.action.MAIN" />
-                        <category android:name="android.intent.category.LAUNCHER" />
-                    </intent-filter>
-                </activity>
-            </application>
-        </manifest>
-        EOF
+        if [ ! -f settings.gradle ]; then
+          echo "rootProject.name = 'AbuAlZahra-Parent'" > settings.gradle
+          echo "include ':app'" >> settings.gradle
+        fi
+        if [ ! -f gradle.properties ]; then
+          echo "org.gradle.jvmargs=-Xmx2048m" > gradle.properties
+          echo "android.useAndroidX=true" >> gradle.properties
+        fi
 
-        # 2. google-services.json
-        cat > app/google-services.json << 'EOF'
-        {
-          "project_info": {
-            "project_number": "787676787951",
-            "project_id": "studio-7073076148-6afe0",
-            "storage_bucket": "studio-7073076148-6afe0.firebasestorage.app"
-          },
-          "client": [
-            {
-              "client_info": {
-                "mobilesdk_app_id": "1:787676787951:android:78bb939f7ab24b0494171a",
-                "android_client_info": { "package_name": "com.abuzahra.manager" }
-              },
-              "api_key": [ { "current_key": "AIzaSyASBVIQ0AvrsLqAgbT9k6L7bCpZKoqdvjo" } ]
-            }
-          ]
-        }
-        EOF
-
-        # 3. Resources
-        echo "<resources><string name=\"app_name\">Abu Al-Zahra</string></resources>" > app/src/main/res/values/strings.xml
-        cat > app/src/main/res/values/styles.xml << 'EOF'
-        <resources>
-            <style name="Theme.Abualzahra" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-                <item name="colorPrimary">#2563EB</item>
-                <item name="android:statusBarColor">#0F172A</item>
-                <item name="android:windowBackground">#0F172A</item>
-            </style>
-        </resources>
-        EOF
-        echo "<?xml version=\"1.0\" encoding=\"utf-8\"?><network-security-config><base-config cleartextTrafficPermitted=\"true\"><trust-anchors><certificates src=\"system\"/></trust-anchors></base-config></network-security-config>" > app/src/main/res/xml/network_security_config.xml
-        echo "<?xml version=\"1.0\" encoding=\"utf-8\"?><full-backup-content><include domain=\"sharedpref\" path=\".\"/></full-backup-content>" > app/src/main/res/xml/backup_rules.xml
-        echo "<?xml version=\"1.0\" encoding=\"utf-8\"?><data-extraction-rules><cloud-backup><include domain=\"sharedpref\" path=\".\"/></cloud-backup></data-extraction-rules>" > app/src/main/res/xml/data_extraction_rules.xml
-        echo "<?xml version=\"1.0\" encoding=\"utf-8\"?><RelativeLayout xmlns:android=\"http://schemas.android.com/apk/res/android\" android:layout_width=\"match_parent\" android:layout_height=\"match_parent\" android:background=\"#0F172A\"><WebView android:id=\"@+id/webview\" android:layout_width=\"match_parent\" android:layout_height=\"match_parent\" /></RelativeLayout>" > app/src/main/res/layout/activity_main.xml
-
-        # 4. HTML (محمي من التعليق)
-        cat > app/src/main/assets/index.html << 'HTMLEOF'
-        <!DOCTYPE html>
-        <html lang="ar" dir="rtl">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <script src="https://cdn.tailwindcss.com"></script>
-            <link href="https://fonts.googleapis.com/css2?family=Tajawal&display=swap" rel="stylesheet">
-            <style>body{font-family:'Tajawal',sans-serif;background-color:#0F172A;color:#fff}.screen{display:none;position:fixed;inset:0;flex-direction:column}.screen.active{display:flex}</style>
-        </head>
-        <body>
-            <div id="screen-splash" class="screen active items-center justify-center">
-                <h1 class="text-4xl text-blue-500">Abu Al-Zahra</h1>
-                <p class="mt-2">Loading...</p>
-            </div>
-            <div id="screen-login" class="screen items-center justify-center p-6">
-                <div class="w-full max-w-sm bg-slate-800 p-6 rounded-xl">
-                    <h2 class="text-2xl mb-4 text-center">Login</h2>
-                    <input id="txt-email" type="email" placeholder="Email" class="w-full bg-slate-700 p-3 rounded mb-2 text-white">
-                    <input id="txt-pass" type="password" placeholder="Password" class="w-full bg-slate-700 p-3 rounded mb-4 text-white">
-                    <button onclick="handleLogin()" class="w-full bg-blue-600 p-3 rounded text-white">Login</button>
-                    <button onclick="handleRegister()" class="w-full bg-green-600 p-3 rounded mt-2 text-white">Register</button>
-                    <p id="auth-error" class="text-red-400 text-xs mt-2 text-center hidden"></p>
-                </div>
-            </div>
-            <div id="screen-binding" class="screen items-center justify-center p-6">
-                <div class="text-center">
-                    <h2 class="text-xl mb-4">Binding Code</h2>
-                    <div class="bg-slate-800 p-4 rounded-xl border-2 border-green-500">
-                        <p id="display-code" class="text-3xl font-mono text-white">000 000 000</p>
-                    </div>
-                    <p class="text-gray-400 text-xs mt-2">Waiting for child device...</p>
-                </div>
-            </div>
-            <div id="screen-main" class="screen bg-slate-900">
-                <header class="p-4 bg-slate-800 flex justify-between"><h1 class="text-white">Dashboard</h1><span class="text-green-400 text-xs">Online</span></header>
-                <main class="p-4 flex-1"><div class="bg-slate-800 p-4 rounded-xl text-white">Child Device: <span id="txt-battery">85%</span></div></main>
-            </div>
-            <script>
-                function callNative(fn, arg){ 
-                    try { 
-                        if(typeof AndroidNative!=='undefined'){ arg ? AndroidNative[fn](arg) : AndroidNative[fn](); } 
-                    } catch(e) { console.log("Bridge Error: " + e); }
-                }
-                function showScreen(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
-                
-                function handleLogin(){ callNative('loginUser', JSON.stringify({email:document.getElementById('txt-email').value, pass:document.getElementById('txt-pass').value})); }
-                function handleRegister(){ callNative('registerUser', JSON.stringify({email:document.getElementById('txt-email').value, pass:document.getElementById('txt-pass').value})); }
-                
-                window.onAuthSuccess = function(uid){ 
-                    showScreen('screen-binding'); 
-                    const c=Math.floor(100000000+Math.random()*900000000).toString(); 
-                    document.getElementById('display-code').innerText=c.substring(0,3)+" "+c.substring(3,6)+" "+c.substring(6); 
-                    callNative('startListeningForChild', c); 
-                };
-                window.onAuthError = function(msg){ document.getElementById('auth-error').innerText=msg; document.getElementById('auth-error').classList.remove('hidden'); };
-                window.onChildLinked = function(){ showScreen('screen-main'); };
-                window.showLoginScreen = function(){ showScreen('screen-login'); };
-
-                // بدء التشغيل
-                setTimeout(function(){ callNative('checkUserStatus'); }, 500);
-            </script>
-        </body>
-        </html>
-        HTMLEOF
-
-        # 5. MainActivity.kt (محدث لطلب الأذونات)
-        cat > app/src/main/java/com/abuzahra/manager/MainActivity.kt << 'EOF'
-        package com.abuzahra.manager
-        import android.Manifest
-        import android.content.pm.PackageManager
-        import android.os.Build
-        import android.os.Bundle
-        import android.webkit.WebSettings
-        import android.webkit.WebView
-        import android.webkit.WebViewClient
-        import androidx.appcompat.app.AppCompatActivity
-        import androidx.core.app.ActivityCompat
-        import androidx.core.content.ContextCompat
-
-        class MainActivity : AppCompatActivity() {
-            lateinit var webView: WebView
-            private val PERMISSIONS_REQUEST_CODE = 101
-
-            override fun onCreate(savedInstanceState: Bundle?) {
-                super.onCreate(savedInstanceState)
-                setContentView(R.layout.activity_main)
-                
-                // طلب الأذونات عند البدء
-                requestDangerousPermissions()
-                
-                webView = findViewById(R.id.webview)
-                val webSettings: WebSettings = webView.settings
-                webSettings.javaScriptEnabled = true
-                webSettings.domStorageEnabled = true
-                webSettings.allowFileAccess = true
-                webView.addJavascriptInterface(WebAppInterface(this), "AndroidNative")
-                webView.webViewClient = WebViewClient()
-                webView.loadUrl("file:///android_asset/index.html")
-            }
-
-            private fun requestDangerousPermissions() {
-                val permissionsNeeded = mutableListOf<String>()
-                
-                // قائمة الأذونات المطلوبة
-                val permissions = arrayOf(
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION,
-                    Manifest.permission.CAMERA,
-                    Manifest.permission.READ_EXTERNAL_STORAGE,
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE
-                )
-
-                for (permission in permissions) {
-                    if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
-                        permissionsNeeded.add(permission)
-                    }
-                }
-
-                if (permissionsNeeded.isNotEmpty()) {
-                    ActivityCompat.requestPermissions(this, permissionsNeeded.toTypedArray(), PERMISSIONS_REQUEST_CODE)
-                }
-            }
-        }
-        EOF
-
-        # 6. WebAppInterface.kt (محمي ضد الانهيار)
-        cat > app/src/main/java/com/abuzahra/manager/WebAppInterface.kt << 'EOF'
-        package com.abuzahra.manager
-        import android.content.Context
-        import android.util.Log
-        import android.webkit.JavascriptInterface
-        import com.google.firebase.auth.FirebaseAuth
-        import com.google.firebase.firestore.FirebaseFirestore
-        import kotlinx.coroutines.CoroutineScope
-        import kotlinx.coroutines.Dispatchers
-        import kotlinx.coroutines.launch
-        import kotlinx.coroutines.tasks.await
-        import org.json.JSONObject
-
-        class WebAppInterface(private val mContext: Context) {
-            private val auth = FirebaseAuth.getInstance()
-            private val db = FirebaseFirestore.getInstance()
-            private var listenerRegistration: com.google.firebase.firestore.ListenerRegistration? = null
-            private val TAG = "AbuZahraApp"
-
-            @JavascriptInterface
-            fun checkUserStatus() {
-                try {
-                    val user = auth.currentUser
-                    if (user != null) {
-                        sendResultToUI("window.onAuthSuccess('${user.uid}')")
-                    } else {
-                        sendResultToUI("window.showLoginScreen()")
-                    }
-                } catch (e: Exception) {
-                    Log.e(TAG, "CheckUser Error: ${e.message}")
-                    sendResultToUI("window.showLoginScreen()")
-                }
-            }
-
-            @JavascriptInterface
-            fun loginUser(jsonData: String) {
-                try {
-                    val data = JSONObject(jsonData)
-                    val email = data.getString("email")
-                    val pass = data.getString("pass")
-                    CoroutineScope(Dispatchers.IO).launch {
-                        try {
-                            auth.signInWithEmailAndPassword(email, pass).await()
-                            sendResultToUI("window.onAuthSuccess('${auth.currentUser?.uid}')")
-                        } catch (e: Exception) {
-                            sendResultToUI("window.onAuthError('${e.message}')")
-                        }
-                    }
-                } catch (e: Exception) {
-                    Log.e(TAG, "Login Error: ${e.message}")
-                }
-            }
-
-            @JavascriptInterface
-            fun registerUser(jsonData: String) {
-                try {
-                    val data = JSONObject(jsonData)
-                    val email = data.getString("email")
-                    val pass = data.getString("pass")
-                    CoroutineScope(Dispatchers.IO).launch {
-                        try {
-                            auth.createUserWithEmailAndPassword(email, pass).await()
-                            sendResultToUI("window.onAuthSuccess('${auth.currentUser?.uid}')")
-                        } catch (e: Exception) {
-                            sendResultToUI("window.onAuthError('${e.message}')")
-                        }
-                    }
-                } catch (e: Exception) {
-                    Log.e(TAG, "Register Error: ${e.message}")
-                }
-            }
-
-            @JavascriptInterface
-            fun startListeningForChild(code: String) {
-                try {
-                    val uid = auth.currentUser?.uid
-                    if (uid == null) {
-                        sendResultToUI("window.onAuthError('User not logged in')")
-                        return
-                    }
-
-                    val codeRef = db.collection("linking_codes").document(code)
-                    CoroutineScope(Dispatchers.IO).launch {
-                        try {
-                            codeRef.set(mapOf("parent_uid" to uid)).await()
-                        } catch (e: Exception) {
-                            Log.e(TAG, "Firestore Set Error: ${e.message}")
-                        }
-                    }
-
-                    listenerRegistration = db.collection("parents").document(uid).collection("children")
-                        .addSnapshotListener { snapshot, e ->
-                            if (e != null) {
-                                Log.e(TAG, "Snapshot Error: ${e.message}")
-                                return@addSnapshotListener
-                            }
-                            if (snapshot != null && !snapshot.isEmpty) {
-                                listenerRegistration?.remove()
-                                sendResultToUI("window.onChildLinked()")
-                            }
-                        }
-                } catch (e: Exception) {
-                    Log.e(TAG, "Binding Error: ${e.message}")
-                }
-            }
-
-            private fun sendResultToUI(jsCode: String) {
-                CoroutineScope(Dispatchers.Main).launch {
-                    try {
-                        (mContext as MainActivity).webView.evaluateJavascript(jsCode, null)
-                    } catch (e: Exception) {
-                        Log.e(TAG, "UI Update Error: ${e.message}")
-                    }
-                }
-            }
-        }
-        EOF
-
-    # === البناء ===
-    - name: Install Gradle and Build
+    - name: Setup Gradle
       run: |
         curl -L https://services.gradle.org/distributions/gradle-8.5-bin.zip -o gradle-8.5-bin.zip
         unzip gradle-8.5-bin.zip
         export PATH=$PWD/gradle-8.5/bin:$PATH
         gradle wrapper
-        ./gradlew :app:assembleDebug
       
-    - name: Upload APK
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+      
+    - name: Build Debug APK
+      run: ./gradlew :app:assembleDebug
+      
+    - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: AbuAlZahra-Parent-App-v2
+        name: AbuAlZahra-Parent-App
         path: app/build/outputs/apk/debug/app-debug.apk
