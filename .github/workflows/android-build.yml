@@ -51,17 +51,32 @@ jobs:
     - name: Build Debug APK
       run: ./gradlew :app:assembleDebug
       
-    # === استخراج وطباعة SHA-1 بوضوح ===
+    # === استخراج وطباعة SHA-1 بوضوح===
     - name: Extract SHA-1 Key
       run: |
         echo "============================================================"
         echo "               🔥 FIREBASE SHA-1 KEY 🔥"
         echo "============================================================"
-        # استخدام keytool لقراءة المفتاح من ملف الـ keystore مباشرة
-        keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android 2>/dev/null | grep "SHA1:"
+        
+        KEYSTORE_PATH=~/.android/debug.keystore
+        
+        if [ -f "$KEYSTORE_PATH" ]; then
+           echo "Keystore found. Extracting key..."
+           # تعطيل التوقف التلقائي عند الخطأ مؤقتاً
+           set +e
+           # محاولة استخراج المفتاح (إزالة -alias لتعميم البحث)
+           keytool -list -v -keystore "$KEYSTORE_PATH" -storepass android | grep "SHA1:"
+           # إعادة تفعيل التوقف التلقائي
+           set -e
+        else
+           echo "ERROR: Keystore file NOT FOUND at $KEYSTORE_PATH"
+           echo "Build might have failed or used a different path."
+        fi
+        
         echo "============================================================"
-        echo "Copy the text after 'SHA1:' above and add it to Firebase."
-        echo "============================================================"
+        echo "If you see a code above (e.g., SHA1: XX:XX:XX...), copy it."
+        echo "If you see errors, check the Build Debug APK step logs."
+        echo "============================================================"=="
       
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
