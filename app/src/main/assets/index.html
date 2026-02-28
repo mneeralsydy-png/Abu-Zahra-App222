@@ -4,170 +4,288 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        body{font-family:'Tajawal',sans-serif;background-color:#FFFFFF;color:#202124}
-        .screen{display:none;position:fixed;inset:0;flex-direction:column}
-        .screen.active{display:flex}
-        .input-field{width:100%;padding:12px 16px;border:1px solid #dadce0;border-radius:8px;outline:none;font-size:16px;margin-bottom:12px}
-        .input-field:focus{border-color:#1a73e8}
-        .btn-primary{width:100%;background-color:#1a73e8;color:white;padding:12px;border-radius:8px;font-weight:bold;border:none;font-size:16px}
-        .btn-secondary{width:100%;background-color:white;color:#3c4043;padding:10px;border:1px solid #dadce0;border-radius:8px;font-weight:500;display:flex;align-items:center;justify-content:center;gap:8px}
-        .code-box{font-family:'Roboto',monospace;font-size:32px;letter-spacing:4px;background:#f1f3f4;padding:20px;border-radius:12px;color:#202124}
+        body { font-family: 'Tajawal', sans-serif; background-color: #0F172A; color: #E2E8F0; overflow: hidden; }
+        
+        /* إدارة الشاشات */
+        .screen { display: none; position: fixed; inset: 0; flex-direction: column; }
+        .screen.active { display: flex; }
+        
+        /* التنسيقات */
+        .glass-panel { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .golden-text-title { font-family: 'Amiri', serif; background: linear-gradient(45deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c); background-size: 200% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: shine 4s linear infinite; }
+        @keyframes shine { to { background-position: 200% center; } }
+        
+        /* تأثيرات */
+        .pulse-dot { animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
     </style>
 </head>
-<body>
+<body class="bg-slate-900">
 
-    <!-- 1. Splash Screen -->
-    <div id="screen-splash" class="screen active items-center justify-center bg-white">
+    <!-- 1. شاشة التحميل (Splash) -->
+    <div id="screen-splash" class="screen active items-center justify-center bg-gradient-to-b from-slate-900 to-blue-900">
         <div class="text-center">
-            <h1 class="text-4xl text-blue-600 font-bold mb-2">Abu Al-Zahra</h1>
-            <div class="mt-4 w-6 h-6 border-2 border-blue-600 border-dashed rounded-full animate-spin mx-auto"></div>
+            <h1 class="text-7xl golden-text-title">Abu Al-Zahra</h1>
+            <p class="text-blue-300 text-sm tracking-widest mt-4">PARENTAL CONTROL SYSTEM</p>
+            <div class="mt-8 w-10 h-10 border-4 border-blue-500 border-dashed rounded-full animate-spin mx-auto"></div>
         </div>
     </div>
 
-    <!-- 2. Login Screen -->
-    <div id="screen-login" class="screen items-center justify-center bg-white p-6">
-        <div class="w-full max-w-sm">
-            <div class="text-center mb-8">
-                <h2 class="text-2xl font-bold text-gray-800">تسجيل الدخول</h2>
-                <p class="text-gray-500 text-sm mt-1">استخدم حسابك للوصول إلى لوحة التحكم</p>
+    <!-- 2. شاشة تسجيل الدخول (مطابقة للتصميم الحديث) -->
+    <div id="screen-login" class="screen items-center justify-center bg-[#0F172A] p-6">
+        <div class="w-full max-w-sm text-center space-y-6">
+            <div class="mb-8">
+                <h2 class="text-5xl golden-text-title">مرحباً</h2>
+                <p class="text-blue-200 text-sm mt-2">سجل الدخول للمتابعة</p>
             </div>
+            
+            <div class="glass-panel rounded-3xl p-6 space-y-4 border border-white/10 shadow-2xl">
+                <!-- حقل البريد -->
+                <div class="text-right">
+                    <label class="text-blue-200 text-xs block mb-1">البريد الإلكتروني</label>
+                    <input id="txt-email" type="email" class="w-full bg-white/5 border border-white/20 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-blue-400 text-sm" placeholder="example@email.com">
+                </div>
+                
+                <!-- حقل كلمة المرور -->
+                <div class="text-right">
+                    <label class="text-blue-200 text-xs block mb-1">كلمة المرور</label>
+                    <input id="txt-pass" type="password" class="w-full bg-white/5 border border-white/20 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-blue-400 text-sm" placeholder="********">
+                </div>
+                
+                <!-- رابط نسيت كلمة المرور -->
+                <div class="text-left">
+                    <a href="#" onclick="showToast('ميزة قيد التطوير')" class="text-blue-400 text-xs hover:underline">نسيت كلمة المرور؟</a>
+                </div>
 
-            <div class="space-y-3">
-                <input id="txt-email" type="email" class="input-field" placeholder="البريد الإلكتروني">
-                <input id="txt-pass" type="password" class="input-field" placeholder="كلمة المرور">
+                <!-- زر تسجيل الدخول -->
+                <button onclick="handleLogin()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-blue-500 transition">تسجيل الدخول</button>
                 
-                <button onclick="handleLogin()" class="btn-primary">تسجيل الدخول</button>
+                <!-- فاصل -->
+                <div class="flex items-center gap-2 text-blue-300 text-xs">
+                    <div class="flex-1 h-[1px] bg-white/20"></div><span>أو</span><div class="flex-1 h-[1px] bg-white/20"></div>
+                </div>
                 
-                <div class="text-center text-gray-400 text-xs my-2">أو</div>
-                
-                <button onclick="handleGoogleLogin()" class="btn-secondary">
-                    <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/></svg>
-                    <span style="font-family:'Roboto',sans-serif">Sign in with Google</span>
+                <!-- زر جوجل -->
+                <button onclick="handleGoogleLogin()" class="w-full bg-white text-gray-800 py-3 rounded-xl font-bold shadow-lg hover:bg-gray-100 transition flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                    <span>الدخول بجوجل</span>
                 </button>
+
+                <!-- زر إنشاء حساب -->
+                <button onclick="handleRegister()" class="w-full bg-green-600 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-green-500 transition mt-2">إنشاء حساب جديد</button>
+                
+                <p id="auth-error" class="text-red-400 text-xs mt-2 text-center hidden"></p>
+            </div>
+            
+            <!-- الشروط والسياسات -->
+            <p class="text-gray-500 text-xs px-4">
+                بالمتابعة، أنت توافق على 
+                <a href="#" class="text-blue-400 hover:underline">شروط الخدمة</a> وتقر بقراءة 
+                <a href="#" class="text-blue-400 hover:underline">سياسة الخصوصية</a>.
+            </p>
+        </div>
+    </div>
+
+    <!-- 3. شاشة الربط (Binding - 9 Digits) -->
+    <div id="screen-binding" class="screen items-center justify-center bg-[#0F172A] p-6">
+        <div class="text-center w-full max-w-sm">
+            <div class="w-20 h-20 mx-auto bg-green-500/20 rounded-full flex items-center justify-center mb-4">
+                <svg class="w-10 h-10 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" /></svg>
+            </div>
+            <h2 class="text-2xl text-white font-bold mb-2">ربط جهاز جديد</h2>
+            <p class="text-gray-400 text-sm mb-6">أدخل هذا الكود في تطبيق الطفل</p>
+            
+            <!-- عرض الكود -->
+            <div class="bg-slate-800 border-2 border-dashed border-green-500 rounded-xl p-4 mb-6">
+                <p class="text-gray-400 text-xs mb-1">كود الربط (9 أرقام)</p>
+                <p id="display-code" class="text-4xl font-mono tracking-widest text-white font-bold">000 000 000</p>
             </div>
 
-            <p id="auth-error" class="text-red-500 text-xs text-center mt-4 hidden"></p>
-            
-            <div class="text-center mt-6">
-                <span class="text-gray-600 text-sm">ليس لديك حساب؟</span>
-                <button onclick="handleRegister()" class="text-blue-600 font-bold text-sm mr-1">إنشاء حساب جديد</button>
+            <div class="flex items-center justify-center gap-2 text-gray-400 text-xs mb-4">
+                <div class="w-2 h-2 rounded-full bg-green-500 pulse-dot"></div>
+                <span id="bind-status">في انتظار اتصال جهاز الطفل...</span>
             </div>
         </div>
     </div>
 
-    <!-- 3. Binding Screen -->
-    <div id="screen-binding" class="screen items-center justify-center bg-white p-6">
-        <div class="w-full max-w-sm text-center">
-            <div class="w-16 h-16 bg-blue-100 rounded-full mx-auto mb-4 flex items-center justify-center">
-                <span class="text-3xl">🔗</span>
+    <!-- 4. الواجهة الرئيسية (Dashboard) -->
+    <div id="screen-main" class="screen bg-[#0F172A]">
+        <!-- Header -->
+        <header class="bg-slate-900/80 border-b border-slate-700 px-4 py-3 flex justify-between items-center shrink-0 z-20">
+            <h1 class="text-lg font-bold text-white">Abu <span class="golden-text-title">Al-Zahra</span></h1>
+            <div class="flex items-center gap-2">
+                <div id="conn-status" class="flex items-center gap-1 px-2 py-1 rounded-full bg-green-900 text-[10px] font-bold text-green-300">
+                    <div class="w-2 h-2 rounded-full bg-green-400 pulse-dot"></div>
+                    <span>ONLINE</span>
+                </div>
+                <button onclick="logout()" class="text-xs text-gray-400 border border-gray-600 rounded-full px-2 py-1">خروج</button>
             </div>
-            <h2 class="text-xl font-bold text-gray-800 mb-2">رمز الربط</h2>
-            <p class="text-gray-500 text-sm mb-6">هذا الكود خاص بحسابك ويبقى ثابتاً. ادخله في تطبيق الطفل.</p>
-            
-            <div class="code-box mb-4" id="display-code">---</div>
-            
-            <p class="text-gray-400 text-xs mt-4">في انتظار اتصال جهاز الطفل...</p>
-        </div>
-    </div>
-    
-    <!-- 4. Success Screen (الجديد: شاشة نجاح الربط مع الزرين) -->
-    <div id="screen-success" class="screen items-center justify-center bg-white p-6">
-        <div class="w-full max-w-sm text-center">
-            <div class="w-24 h-24 bg-green-100 rounded-full mx-auto mb-6 flex items-center justify-center shadow-lg">
-                <svg class="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
-            </div>
-            <h2 class="text-2xl font-bold text-gray-800 mb-2">تم الربط بنجاح!</h2>
-            <p class="text-gray-500 text-sm mb-8">تم توصيل جهاز الطفل بحسابك بنجاح. يمكنك الآن البدء بالمراقبة.</p>
-            
-            <div class="space-y-3">
-                <button onclick="goToDashboard()" class="btn-primary">تم</button>
-                <button onclick="addAnotherDevice()" class="btn-secondary text-blue-600 border-blue-100">إضافة جهاز آخر</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 5. Dashboard -->
-    <div id="screen-main" class="screen bg-gray-100">
-        <header class="bg-white p-4 border-b shadow-sm flex justify-between items-center shrink-0 z-20">
-            <h1 class="text-lg font-bold text-gray-800">لوحة التحكم</h1>
-            <span class="text-xs text-green-600 font-bold">Online</span>
         </header>
-        <main class="p-4 flex-1 overflow-y-auto">
-            <div class="bg-white p-4 rounded-xl shadow-sm mb-4">
-                <h3 class="font-bold text-gray-800">جهاز الطفل</h3>
-                <p class="text-sm text-gray-500">البطارية: <span id="txt-battery">--</span>%</p>
+
+        <main class="flex-1 overflow-y-auto p-4 pb-24">
+            <!-- Device Card -->
+            <div id="device-card" class="glass-panel rounded-2xl p-4 mb-4 flex items-center gap-4 border border-slate-700">
+                <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold shadow-lg">S</div>
+                <div class="flex-1">
+                    <h2 class="font-bold text-white">جهاز الطفل</h2>
+                    <div class="flex items-center gap-2 text-gray-400 text-xs">
+                        <span id="txt-battery">85%</span> | <span>الرياض</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="grid grid-cols-2 gap-2 mb-4">
+                <div class="glass-panel rounded-xl p-3 text-center border border-slate-700">
+                    <p class="text-2xl font-bold text-white">3h</p>
+                    <p class="text-gray-500 text-[10px]">وقت الشاشة</p>
+                </div>
+                <div class="glass-panel rounded-xl p-3 text-center border border-slate-700">
+                    <p class="text-2xl font-bold text-white">0</p>
+                    <p class="text-gray-500 text-[10px]">تنبيهات</p>
+                </div>
+            </div>
+
+            <!-- Control Tools -->
+            <h3 class="text-gray-400 text-xs font-bold mb-2">التحكم المباشر</h3>
+            <div class="grid grid-cols-3 gap-3 mb-6">
+                <button onclick="sendCommand('location')" class="bg-slate-800 rounded-xl p-3 flex flex-col items-center justify-center h-24 hover:bg-slate-700 transition border border-slate-700">
+                    <div class="w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center mb-1">
+                        <svg class="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /></svg>
+                    </div>
+                    <span class="text-[10px] font-bold text-gray-200">الموقع</span>
+                </button>
+                <button onclick="sendCommand('lock')" class="bg-slate-800 rounded-xl p-3 flex flex-col items-center justify-center h-24 hover:bg-slate-700 transition border border-slate-700">
+                    <div class="w-10 h-10 bg-yellow-500/20 rounded-full flex items-center justify-center mb-1">
+                        <svg class="w-5 h-5 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                    </div>
+                    <span class="text-[10px] font-bold text-gray-200">قفل</span>
+                </button>
+                <button onclick="sendCommand('apps')" class="bg-slate-800 rounded-xl p-3 flex flex-col items-center justify-center h-24 hover:bg-slate-700 transition border border-slate-700">
+                    <div class="w-10 h-10 bg-purple-500/20 rounded-full flex items-center justify-center mb-1">
+                        <svg class="w-5 h-5 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+                    </div>
+                    <span class="text-[10px] font-bold text-gray-200">التطبيقات</span>
+                </button>
             </div>
         </main>
     </div>
 
+    <!-- JavaScript Logic -->
     <script>
-        function callNative(fn, arg){ if(typeof AndroidNative!=='undefined'){ arg ? AndroidNative[fn](arg) : AndroidNative[fn](); } }
-        function showScreen(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
-
-        function handleLogin(){
-            const e = document.getElementById('txt-email').value;
-            const p = document.getElementById('txt-pass').value;
-            if(!e || !p) return;
-            callNative('loginUser', JSON.stringify({email:e, pass:p}));
+        // --- Native Bridge (التواصل مع كود Kotlin) ---
+        function callNative(fn, arg) {
+            if (typeof AndroidNative !== 'undefined') {
+                if (arg) AndroidNative[fn](arg); else AndroidNative[fn]();
+            } else {
+                console.warn(`Native bridge (${fn}) not found.`);
+                // محاكاة للاختبار في المتصفح (لمدة التطوير فقط)
+                simulateNative(fn, arg);
+            }
         }
 
-        function handleRegister(){
-            const e = document.getElementById('txt-email').value;
-            const p = document.getElementById('txt-pass').value;
-            if(!e || !p) { alert("الرجاء إدخال البريد وكلمة المرور للتسجيل"); return; }
-            callNative('registerUser', JSON.stringify({email:e, pass:p}));
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
         }
 
-        function handleGoogleLogin(){
-            callNative('loginGoogle');
+        // --- Auth Logic ---
+        function handleLogin() {
+            const email = document.getElementById('txt-email').value;
+            const pass = document.getElementById('txt-pass').value;
+            if(!email || !pass) return;
+            callNative('loginUser', JSON.stringify({email: email, pass: pass}));
         }
 
-        // Callbacks from Native
-        window.onAuthSuccess = function(uid){ showScreen('screen-binding'); }
+        function handleRegister() {
+            const email = document.getElementById('txt-email').value;
+            const pass = document.getElementById('txt-pass').value;
+            if(!email || !pass) return;
+            callNative('registerUser', JSON.stringify({email: email, pass: pass}));
+        }
         
-        window.onGoogleLoginSuccess = function(){
-            // Success handled by checkUserStatus usually
+        function handleGoogleLogin() {
+            callNative('loginWithGoogle');
         }
 
-        // استقبال الكود من الكوتلن (ثابت أو جديد)
-        window.showBindingCode = function(code){
-            const formatted = code.substring(0,3) + " " + code.substring(3,6) + " " + code.substring(6);
-            document.getElementById('display-code').innerText = formatted;
+        function logout() {
+            callNative('logoutUser');
+            showScreen('screen-login');
+        }
+
+        // --- Binding Logic ---
+        function generateCode() {
+            // توليد كود عشوائي من 9 أرقام
+            const code = Math.floor(100000000 + Math.random() * 900000000);
+            return code.toString().substring(0,3) + " " + code.toString().substring(3,6) + " " + code.toString().substring(6);
+        }
+
+        // --- Native Callbacks (يتم استدعاؤها من Kotlin) ---
+        
+        // يتم استدعاؤها عند نجاح تسجيل الدخول/التسجيل
+        window.onAuthSuccess = function(uid) {
             showScreen('screen-binding');
-            // نبدأ الاستماع للطفل
-            callNative('startListeningForChild', code);
+            const code = generateCode();
+            document.getElementById('display-code').innerText = code;
+            // إرسال الكود لـ Kotlin لبدء الاستماع
+            // إزالة المسافات قبل الإرسال
+            callNative('startListeningForChild', code.replace(/\s/g, ''));
         };
-        
-        // عند اكتشاف الطفل -> نذهب لشاشة النجاح
-        window.onChildLinked = function(){
-            showScreen('screen-success');
+
+        // يتم استدعاؤها عند حدوث خطأ
+        window.onAuthError = function(msg) {
+            document.getElementById('auth-error').innerText = msg;
+            document.getElementById('auth-error').classList.remove('hidden');
         };
-        
-        // زر "تم" -> لوحة التحكم
-        function goToDashboard(){
+
+        // يتم استدعاؤها عند اكتشاف جهاز طفل جديد (Real-time)
+        window.onChildLinked = function() {
             showScreen('screen-main');
-        }
-        
-        // زر "إضافة جهاز آخر" -> العودة للربط (سيظهر نفس الكود الثابت)
-        function addAnotherDevice(){
-            showScreen('screen-binding');
-        }
-
-        window.onAuthError = function(msg){ 
-            document.getElementById('auth-error').innerText = msg; 
-            document.getElementById('auth-error').classList.remove('hidden'); 
         };
         
-        window.updateChildData = function(json){
-            const data = JSON.parse(json);
-            document.getElementById('txt-battery').innerText = data.battery;
+        // تحديث البيانات في الواجهة (مثل البطارية)
+        window.updateChildData = function(dataJson) {
+            try {
+                const data = JSON.parse(dataJson);
+                if(data.battery) document.getElementById('txt-battery').innerText = data.battery + "%";
+            } catch(e) {}
+        };
+
+        // --- Dashboard Logic ---
+        function sendCommand(cmd) {
+            callNative('sendCommandToChild', cmd);
+        }
+        
+        // مساعد لواجهة المستخدم
+        window.showToast = function(msg) {
+            alert(msg);
         }
 
-        // Start
+        // --- Simulation for Browser Testing ---
+        function simulateNative(fn, arg) {
+            console.log(`Simulating: ${fn}`);
+            if(fn === 'loginUser' || fn === 'registerUser') {
+                setTimeout(() => onAuthSuccess('test_uid'), 500);
+            }
+            if(fn === 'startListeningForChild') {
+                setTimeout(() => onChildLinked(), 2000);
+            }
+        }
+
+        // === حل مشكلة التعليق: Safety Timeout ===
+        // إذا لم يستجب التطبيق خلال 4 ثواني، انتقل لشاشة الدخول
+        setTimeout(function(){
+            if(document.getElementById('screen-splash').classList.contains('active')){
+                console.log("Safety Timeout Triggered");
+                showScreen('screen-login');
+            }
+        }, 4000);
+
+        // بدء التشغيل
         setTimeout(function(){ callNative('checkUserStatus'); }, 500);
+
     </script>
 </body>
-                                                                                                              </html>
+</html>
