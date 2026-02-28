@@ -1,37 +1,64 @@
 package com.abuzahra.manager
 
-import android.content.Intent
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.appcompat.app.AppCompatActivity
-import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInClient
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.GoogleAuthProvider
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 
 class MainActivity : AppCompatActivity() {
 
     lateinit var webView: WebView
-    private lateinit var googleSignInClient: GoogleSignInClient
-    private val RC_SIGN_IN = 9001
+    private val PERMISSIONS_REQUEST_CODE = 101
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // إعداد تسجيل الدخول بجوجل
-        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestIdToken(getString(R.string.default_web_client_id))
-            .requestEmail()
-            .build()
-        
-        googleSignInClient = GoogleSignIn.getClient(this, gso)
+        // 1. طلب الأذونات المطلوبة فوراً
+        requestRuntimePermissions()
 
         webView = findViewById(R.id.webview)
         setupWebView()
+    }
+
+    private fun requestRuntimePermissions() {
+        val permissionsNeeded = mutableListOf<String>()
+
+        // قائمة الأذونات المطلوبة
+        val permissions = mutableListOf(
+            Manifest.permission.CAMERA,
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE
+        )
+
+        // إضافة إذن الإشعارات للأندرويد 13 فما فوق
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            permissions.add(Manifest.permission.POST_NOTIFICATIONS)
+        }
+        
+        // للإصدارات الحديثة من أندرويد 13+ لا نحتاج READ_EXTERNAL_STORAGE
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+             permissions.remove(Manifest.permission.READ_EXTERNAL_STORAGE)
+             permissions.remove(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+             permissions.add(Manifest.permission.READ_MEDIA_IMAGES)
+        }
+
+        for (permission in permissions) {
+            if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+                permissionsNeeded.add(permission)
+            }
+        }
+
+        if (permissionsNeeded.isNotEmpty()) {
+            ActivityCompat.requestPermissions(this, permissionsNeeded.toTypedArray(), PERMISSIONS_REQUEST_CODE)
+        }
     }
 
     private fun setupWebView() {
@@ -40,33 +67,11 @@ class MainActivity : AppCompatActivity() {
         webSettings.domStorageEnabled = true
         webSettings.allowFileAccess = true
         
+        // إضافة الواجهة قبل التحميل
         webView.addJavascriptInterface(WebAppInterface(this), "AndroidNative")
         webView.webViewClient = WebViewClient()
+        
+        // تحميل الصفحة
         webView.loadUrl("file:///android_asset/index.html")
-    }
-
-    fun startGoogleSignIn() {
-        val signInIntent = googleSignInClient.signInIntent
-        startActivityForResult(signInIntent, RC_SIGN_IN)
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == RC_SIGN_IN) {
-            val task = GoogleSignIn.getSignedInAccountFromIntent(data)
-            try {
-                val account = task.getResult(Exception::class.java)
-                val credential = GoogleAuthProvider.getCredential(account.idToken, null)
-                FirebaseAuth.getInstance().signInWithCredential(credential).addOnCompleteListener { task ->
-                    if (task.isSuccessful) {
-                        webView.evaluateJavascript("window.onGoogleLoginSuccess()", null)
-                    } else {
-                        webView.evaluateJavascript("window.onAuthError('فشل تسجيل الدخول')", null)
-                    }
-                }
-            } catch (e: Exception) {
-                webView.evaluateJavascript("window.onAuthError('${e.message}')", null)
-            }
-        }
     }
 }
