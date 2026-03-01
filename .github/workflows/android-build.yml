@@ -77,6 +77,26 @@ jobs:
         
         # نوقع الملف بالمفتاح الدائم
         jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore abuzahra-release-key.jks -storepass abuzahra123 app/build/outputs/apk/debug/app-debug.apk abuzahra
+        - name: Extract SHA-1 Key
+      run: |
+        echo "============================================================"
+        echo "               🔥 FIREBASE SHA-1 KEY 🔥"
+        echo "============================================================"
+        APK_SIGNER=$(find $ANDROID_HOME/build-tools -name "apksigner" | sort -r | head -n 1)
+        
+        if [ -f "$APK_SIGNER" ]; then
+           echo "Found apksigner."
+           # طباعة المفتاح
+           $APK_SIGNER verify --print-certs app/build/outputs/apk/debug/app-debug.apk
+        else
+           echo "ERROR: apksigner not found."
+           exit 1
+        fi
+        
+        echo "============================================================"
+        echo "NOTE: If this is the FIRST build, copy the SHA-1 above to Firebase."
+        echo "If you already added it, future builds will use the SAME key."
+        echo "============================================================"
       
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
