@@ -51,6 +51,17 @@ class WebAppInterface(private val mContext: Context) {
         }
     }
 
+
+    @JavascriptInterface
+    fun getDeviceConfig(): String {
+        val user = FirebaseAuth.getInstance().currentUser
+        val deviceId = Settings.Secure.getString(mContext.contentResolver, Settings.Secure.ANDROID_ID)
+        val json = JSONObject()
+        json.put("parentId", user?.uid ?: "")
+        json.put("deviceId", deviceId)
+        return json.toString()
+    }
+    
     @JavascriptInterface
     fun registerUser(jsonData: String) {
         try {
