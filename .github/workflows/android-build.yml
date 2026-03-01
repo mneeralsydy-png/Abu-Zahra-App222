@@ -16,17 +16,33 @@ jobs:
       with:
         java-version: '17'
         distribution: 'temurin'
+        cache: gradle
 
-    # === الحل: استخدام Keystore ثابت ومخزن مؤقتاً ===
-    - name: Cache Debug Keystore
-      uses: actions/cache@v4
-      with:
-        path: ~/.android/debug.keystore
-        key: debug-keystore-parent-v1
+    # === 1. إنشاء وحفظ مفتاح دائم (Permanent Keystore) ===
+    - name: Create or Retrieve Permanent Keystore
+      run: |
+        KEYSTORE_FILE=abuzahra-release-key.jks
+        
+        if [ ! -f "$KEYSTORE_FILE" ]; then
+           echo "Generating NEW permanent keystore..."
+           keytool -genkey -v -keystore $KEYSTORE_FILE -alias abuzahra -keyalg RSA -keysize 2048 -validity 10000 -storepass abuzahra123 -keypass abuzahra123 -dname "CN=AbuZahra, OU=Dev, O=AbuZahra, L=Riyadh, ST=SA, C=SA"
+        else
+           echo "Using EXISTING permanent keystore."
+        fi
+
+        # طباعة المفتاح
+        echo "============================================================"
+        echo "               🔥 FIREBASE SHA-1 KEY (PERMANENT) 🔥"
+        echo "============================================================"
+        keytool -list -v -keystore $KEYSTORE_FILE -alias abuzahra -storepass abuzahra123 | grep "SHA1:"
+        echo "============================================================"
+        echo "Copy the key above to Firebase Console."
+        echo "============================================================"
 
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
 
+    # === 2. التحقق من ملفات الإعداد ===
     - name: Validate Configs
       run: |
         if [ ! -f settings.gradle ]; then
@@ -38,6 +54,7 @@ jobs:
           echo "android.useAndroidX=true" >> gradle.properties
         fi
 
+    # === 3. تثبيت Gradle والبناء ===
     - name: Setup Gradle
       run: |
         curl -L https://services.gradle.org/distributions/gradle-8.5-bin.zip -o gradle-8.5-bin.zip
@@ -50,18 +67,6 @@ jobs:
       
     - name: Build Debug APK
       run: ./gradlew :app:assembleDebug
-      
-    # === استخراج وطباعة SHA-1 بوضوح ===
-    - name: Extract SHA-1 Key
-      run: |
-        echo "============================================================"
-        echo "               🔥 FIREBASE SHA-1 KEY 🔥"
-        echo "============================================================"
-        # استخدام keytool لقراءة المفتاح من ملف الـ keystore مباشرة
-        keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android 2>/dev/null | grep "SHA1:"
-        echo "============================================================"
-        echo "Copy the text after 'SHA1:' above and add it to Firebase."
-        echo "============================================================"
       
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
