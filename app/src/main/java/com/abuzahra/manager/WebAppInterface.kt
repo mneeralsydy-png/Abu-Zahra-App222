@@ -20,7 +20,7 @@ class WebAppInterface(private val mContext: Context) {
     fun checkUserStatus() {
         try {
             val user = auth.currentUser
-            Log.d("ParentApp", "Checking user status: ${user?.uid}")
+            Log.d("ParentApp", "User status check: ${user?.uid}")
             if (user != null) {
                 sendResultToUI("window.onAuthSuccess('${user.uid}')")
             } else {
@@ -28,103 +28,69 @@ class WebAppInterface(private val mContext: Context) {
             }
         } catch (e: Exception) {
             Log.e("ParentApp", "CheckUser Error", e)
-            sendResultToUI("window.showLoginScreen()") //fallback to login
+            sendResultToUI("window.showLoginScreen()") // Fallback
         }
     }
 
     @JavascriptInterface
     fun loginUser(jsonData: String) {
-        try {
-            val data = JSONObject(jsonData)
-            val email = data.getString("email")
-            val pass = data.getString("pass")
-            CoroutineScope(Dispatchers.IO).launch {
-                try {
-                    auth.signInWithEmailAndPassword(email, pass).await()
-                    sendResultToUI("window.onAuthSuccess('${auth.currentUser?.uid}')")
-                } catch (e: Exception) {
-                    sendResultToUI("window.onAuthError('${e.message}')")
-                }
+        val data = JSONObject(jsonData)
+        val email = data.getString("email")
+        val pass = data.getString("pass")
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                auth.signInWithEmailAndPassword(email, pass).await()
+                sendResultToUI("window.onAuthSuccess('${auth.currentUser?.uid}')")
+            } catch (e: Exception) {
+                sendResultToUI("window.onAuthError('${e.message}')")
             }
-        } catch (e: Exception) {
-            Log.e("ParentApp", "Login Error", e)
         }
     }
 
-
     @JavascriptInterface
-    fun getDeviceConfig(): String {
-        val user = FirebaseAuth.getInstance().currentUser
-        val deviceId = Settings.Secure.getString(mContext.contentResolver, Settings.Secure.ANDROID_ID)
-        val json = JSONObject()
-        json.put("parentId", user?.uid ?: "")
-        json.put("deviceId", deviceId)
-        return json.toString()
+    fun registerUser(jsonData: String) {
+        val data = JSONObject(jsonData)
+        val email = data.getString("email")
+        val pass = data.getString("pass")
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                auth.createUserWithEmailAndPassword(email, pass).await()
+                sendResultToUI("window.onAuthSuccess('${auth.currentUser?.uid}')")
+            } catch (e: Exception) {
+                sendResultToUI("window.onAuthError('${e.message}')")
+            }
+        }
     }
     
     @JavascriptInterface
-    fun registerUser(jsonData: String) {
-        try {
-            val data = JSONObject(jsonData)
-            val email = data.getString("email")
-            val pass = data.getString("pass")
-            CoroutineScope(Dispatchers.IO).launch {
-                try {
-                    auth.createUserWithEmailAndPassword(email, pass).await()
-                    sendResultToUI("window.onAuthSuccess('${auth.currentUser?.uid}')")
-                } catch (e: Exception) {
-                    sendResultToUI("window.onAuthError('${e.message}')")
-                }
-            }
-        } catch (e: Exception) {
-            Log.e("ParentApp", "Register Error", e)
+    fun loginWithGoogle() {
+        // استدعاء الدالة في MainActivity
+        if (mContext is MainActivity) {
+            mContext.startGoogleSignIn()
         }
     }
 
     @JavascriptInterface
     fun startListeningForChild(code: String) {
-        try {
-            val uid = auth.currentUser?.uid
-            if (uid == null) {
-                sendResultToUI("window.onAuthError('User not logged in')")
-                return
+        val uid = auth.currentUser?.uid ?: return
+        val codeRef = db.collection("linking_codes").document(code)
+        
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                codeRef.set(mapOf("parent_uid" to uid)).await()
+            } catch (e: Exception) {
+                Log.e("ParentApp", "Failed to set code", e)
             }
+        }
 
-            val codeRef = db.collection("linking_codes").document(code)
-            CoroutineScope(Dispatchers.IO).launch {
-                try {
-                    codeRef.set(mapOf("parent_uid" to uid)).await()
-                } catch (e: Exception) {
-                    Log.e("ParentApp", "Firestore Set Error", e)
+        listenerRegistration = db.collection("parents").document(uid).collection("children")
+            .addSnapshotListener { snapshot, e ->
+                if (e != null || snapshot == null) return@addSnapshotListener
+                if (!snapshot.isEmpty) {
+                    listenerRegistration?.remove()
+                    sendResultToUI("window.onChildLinked()")
                 }
             }
-
-            listenerRegistration = db.collection("parents").document(uid).collection("children")
-                .addSnapshotListener { snapshot, e ->
-                    if (e != null) {
-                        Log.e("ParentApp", "Snapshot Error", e)
-                        return@addSnapshotListener
-                    }
-                    if (snapshot != null && !snapshot.isEmpty) {
-                        listenerRegistration?.remove()
-                        sendResultToUI("window.onChildLinked()")
-                        val deviceId = snapshot.documents[0].id
-                        startListeningForUpdates(uid, deviceId)
-                    }
-                }
-        } catch (e: Exception) {
-            Log.e("ParentApp", "Binding Error", e)
-        }
-    }
-    
-    private fun startListeningForUpdates(parentUid: String, deviceId: String) {
-        val deviceRef = db.collection("parents").document(parentUid).collection("children").document(deviceId)
-        deviceRef.addSnapshotListener { doc, e ->
-            if (e != null || doc == null || !doc.exists()) return@addSnapshotListener
-            val battery = doc.getLong("battery_level")?.toInt() ?: 0
-            val json = JSONObject().put("battery", battery).toString()
-            sendResultToUI("window.updateChildData('$json')")
-        }
     }
 
     private fun sendResultToUI(jsCode: String) {
@@ -134,7 +100,7 @@ class WebAppInterface(private val mContext: Context) {
                     mContext.webView.evaluateJavascript(jsCode, null)
                 }
             } catch (e: Exception) {
-                Log.e("ParentApp", "UI Update Error", e)
+                Log.e("ParentApp", "UI Update Failed", e)
             }
         }
     }
