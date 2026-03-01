@@ -51,32 +51,28 @@ jobs:
     - name: Build Debug APK
       run: ./gradlew :app:assembleDebug
       
-    # === استخراج وطباعة SHA-1 بوضوح===
+    # === استخراج المفتاح من ملف الـ APK مباشرة (الحل النهائي) ===
     - name: Extract SHA-1 Key
       run: |
         echo "============================================================"
         echo "               🔥 FIREBASE SHA-1 KEY 🔥"
         echo "============================================================"
         
-        KEYSTORE_PATH=~/.android/debug.keystore
+        APK_PATH="app/build/outputs/apk/debug/app-debug.apk"
         
-        if [ -f "$KEYSTORE_PATH" ]; then
-           echo "Keystore found. Extracting key..."
-           # تعطيل التوقف التلقائي عند الخطأ مؤقتاً
-           set +e
-           # محاولة استخراج المفتاح (إزالة -alias لتعميم البحث)
-           keytool -list -v -keystore "$KEYSTORE_PATH" -storepass android | grep "SHA1:"
-           # إعادة تفعيل التوقف التلقائي
-           set -e
+        if [ -f "$APK_PATH" ]; then
+           echo "Found APK. Reading signature..."
+           # استخدام keytool لقراءة الشهادة من داخل الـ APK
+           # هذا الأمر يطبع المفتاح مباشرة
+           keytool -printcert -jarfile "$APK_PATH" | grep "SHA1:"
         else
-           echo "ERROR: Keystore file NOT FOUND at $KEYSTORE_PATH"
-           echo "Build might have failed or used a different path."
+           echo "ERROR: APK file not found at $APK_PATH"
+           echo "Build might have failed in the previous step."
         fi
         
         echo "============================================================"
-        echo "If you see a code above (e.g., SHA1: XX:XX:XX...), copy it."
-        echo "If you see errors, check the Build Debug APK step logs."
-        echo "============================================================"=="
+        echo "Copy the text after 'SHA1:' above and add it to Firebase."
+        echo "============================================================"
       
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
