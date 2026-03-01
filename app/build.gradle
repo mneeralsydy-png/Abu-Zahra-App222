@@ -41,8 +41,8 @@ dependencies {
     implementation 'com.google.firebase:firebase-auth-ktx'
     implementation 'com.google.firebase:firebase-firestore-ktx'
     
-    // Google Sign-In
-    implementation 'com.google.android.gms:play-services-auth:20.7.0'
+    // Google Sign In (مكتبة ضرورية)
+    implementation 'com.google.android.gms:play-services-auth:21.0.1'
     
     // Coroutines
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
