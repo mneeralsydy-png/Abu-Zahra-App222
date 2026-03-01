@@ -5,6 +5,7 @@ import android.util.Log
 import android.webkit.JavascriptInterface
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -18,11 +19,44 @@ class WebAppInterface(private val mContext: Context) {
 
     @JavascriptInterface
     fun checkUserStatus() {
-        try {
-            val user = auth.currentUser
-            if (user != null) sendResultToUI("window.onAuthSuccess('${user.uid}')")
-            else sendResultToUI("window.showLoginScreen()")
-        } catch (e: Exception) { sendResultToUI("window.showLoginScreen()") }
+        val user = auth.currentUser
+        if (user == null) {
+            sendResultToUI("window.showLoginScreen()")
+            return
+        }
+
+        val uid = user.uid
+        val parentRef = db.collection("parents").document(uid)
+
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                // 1. التحقق إذا كان الطفل مربوطاً بالفعل
+                val childrenSnapshot = parentRef.collection("children").limit(1).get().await()
+                if (!childrenSnapshot.isEmpty) {
+                    // الطفل مربوط -> اذهب للوحة التحكم
+                    sendResultToUI("window.onChildLinked()")
+                    return@launch
+                }
+
+                // 2. الطفل غير مربوط -> التحقق من وجود كود محفوظ
+                val parentDoc = parentRef.get().await()
+                
+                if (parentDoc.exists() && parentDoc.contains("binding_code")) {
+                    // كود موجود مسبقاً -> عرضه
+                    val existingCode = parentDoc.getString("binding_code")
+                    sendResultToUI("window.onAuthSuccess('$existingCode')")
+                } else {
+                    // لا يوجد كود -> توليد كود جديد وحفظه
+                    val newCode = (100000000..999999999).random().toString()
+                    parentRef.set(mapOf("binding_code" to newCode), SetOptions.merge()).await()
+                    sendResultToUI("window.onAuthSuccess('$newCode')")
+                }
+
+            } catch (e: Exception) {
+                Log.e("ParentApp", "Error checking status", e)
+                sendResultToUI("window.showLoginScreen()")
+            }
+        }
     }
 
     @JavascriptInterface
@@ -31,7 +65,7 @@ class WebAppInterface(private val mContext: Context) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 auth.signInWithEmailAndPassword(data.getString("email"), data.getString("pass")).await()
-                sendResultToUI("window.onAuthSuccess('${auth.currentUser?.uid}')")
+                checkUserStatus() // إعادة التحقق بعد الدخول
             } catch (e: Exception) { sendResultToUI("window.onAuthError('${e.message}')") }
         }
     }
@@ -42,7 +76,7 @@ class WebAppInterface(private val mContext: Context) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 auth.createUserWithEmailAndPassword(data.getString("email"), data.getString("pass")).await()
-                sendResultToUI("window.onAuthSuccess('${auth.currentUser?.uid}')")
+                checkUserStatus() // إعادة التحقق بعد التسجيل
             } catch (e: Exception) { sendResultToUI("window.onAuthError('${e.message}')") }
         }
     }
@@ -54,48 +88,28 @@ class WebAppInterface(private val mContext: Context) {
 
     @JavascriptInterface
     fun startListeningForChild(code: String) {
-        val uid = auth.currentUser?.uid
-        if (uid == null) {
-            sendResultToUI("window.onAuthError('المستخدم غير مسجل الدخول')")
-            return
-        }
-
+        val uid = auth.currentUser?.uid ?: return
         val codeRef = db.collection("linking_codes").document(code)
         
-        // 1. إنشاء/تحديث الكود
+        // حفظ الكود في الرابط المخصص للربط
         CoroutineScope(Dispatchers.IO).launch {
             try { 
                 codeRef.set(mapOf("parent_uid" to uid)).await()
-                Log.d("ParentApp", "Code written successfully")
+                Log.d("ParentApp", "Listening started for code: $code")
             } catch (e: Exception) { 
-                Log.e("ParentApp", "Failed to write code", e)
-                sendResultToUI("window.onAuthError('فشل كتابة الكود: ${e.message}')")
+                Log.e("ParentApp", "Failed to write code", e) 
             }
         }
 
-        // 2. التأكد من وجود مستند الوالد (مهم جداً)
-        val parentRef = db.collection("parents").document(uid)
-        CoroutineScope(Dispatchers.IO).launch {
-             try {
-                 parentRef.set(mapOf("exists" to true), com.google.firebase.firestore.SetOptions.merge()).await()
-             } catch (e: Exception) { Log.e("ParentApp", "Parent doc creation failed", e) }
-        }
-
-        // 3. بدء الاستماع
+        // الاستماع لظهور بيانات الطفل
         listenerRegistration = db.collection("parents").document(uid).collection("children")
             .addSnapshotListener { snapshot, e ->
                 if (e != null) {
                     Log.e("ParentApp", "Listener FAILED", e)
-                    // إرسال رسالة الخطأ للواجهة لنعرف السبب
-                    sendResultToUI("window.onAuthError('خطأ في المستمع: ${e.message}')")
                     return@addSnapshotListener
                 }
                 
-                if (snapshot == null) return@addSnapshotListener
-                
-                Log.d("ParentApp", "Snapshot size: ${snapshot.size()}")
-                
-                if (!snapshot.isEmpty) {
+                if (snapshot != null && !snapshot.isEmpty) {
                     listenerRegistration?.remove()
                     sendResultToUI("window.onChildLinked()")
                 }
