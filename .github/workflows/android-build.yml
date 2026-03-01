@@ -17,33 +17,12 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    # === 1. إنشاء وحفظ مفتاح دائم (Permanent Keystore) ===
-    - name: Create or Retrieve Permanent Keystore
-      id: keystore
-      run: |
-        # مسار ملف المفتاح
-        KEYSTORE_FILE=abuzahra-release-key.jks
-        
-        # التحقق مما إذا كان الملف موجوداً (لن يتغير المفتاح أبداً)
-        if [ ! -f "$KEYSTORE_FILE" ]; then
-           echo "Generating NEW permanent keystore..."
-           # إنشاء مفتاح جديد (كلمة المرور: abuzahra123)
-           keytool -genkey -v -keystore $KEYSTORE_FILE -alias abuzahra -keyalg RSA -keysize 2048 -validity 10000 -storepass abuzahra123 -keypass abuzahra123 -dname "CN=AbuZahra, OU=Dev, O=AbuZahra, L=Riyadh, ST=SA, C=SA"
-        else
-           echo "Using EXISTING permanent keystore."
-        fi
-
-        # استخراج المفتاح وطباعته
-        echo "============================================================"
-        echo "               🔥 FIREBASE SHA-1 KEY (PERMANENT) 🔥"
-        echo "============================================================"
-        keytool -list -v -keystore $KEYSTORE_FILE -alias abuzahra -storepass abuzahra123 | grep "SHA1:"
-        echo "============================================================"
-        echo "👆 COPY THE KEY ABOVE (starts with SHA1:) 👆"
-        echo "============================================================"
-        
-        # حفظ المسار لاستخدامه في البناء
-        echo "KEYSTORE_PATH=$KEYSTORE_FILE" >> $GITHUB_OUTPUT
+    # === الحل: استخدام Keystore ثابت ومخزن مؤقتاً ===
+    - name: Cache Debug Keystore
+      uses: actions/cache@v4
+      with:
+        path: ~/.android/debug.keystore
+        key: debug-keystore-parent-v1
 
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
@@ -69,33 +48,19 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
       
-    - name: Build Debug APK (Signed with Permanent Key)
-      run: |
-        # توقيع التطبيق بالمفتاح الدائم يدوياً (لضمان الثبات)
-        # أولاً نبني بدون توقيع
-        ./gradlew :app:assembleDebug
-        
-        # نوقع الملف بالمفتاح الدائم
-        jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore abuzahra-release-key.jks -storepass abuzahra123 app/build/outputs/apk/debug/app-debug.apk abuzahra
-        - name: Extract SHA-1 Key
+    - name: Build Debug APK
+      run: ./gradlew :app:assembleDebug
+      
+    # === استخراج وطباعة SHA-1 بوضوح ===
+    - name: Extract SHA-1 Key
       run: |
         echo "============================================================"
         echo "               🔥 FIREBASE SHA-1 KEY 🔥"
         echo "============================================================"
-        APK_SIGNER=$(find $ANDROID_HOME/build-tools -name "apksigner" | sort -r | head -n 1)
-        
-        if [ -f "$APK_SIGNER" ]; then
-           echo "Found apksigner."
-           # طباعة المفتاح
-           $APK_SIGNER verify --print-certs app/build/outputs/apk/debug/app-debug.apk
-        else
-           echo "ERROR: apksigner not found."
-           exit 1
-        fi
-        
+        # استخدام keytool لقراءة المفتاح من ملف الـ keystore مباشرة
+        keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android 2>/dev/null | grep "SHA1:"
         echo "============================================================"
-        echo "NOTE: If this is the FIRST build, copy the SHA-1 above to Firebase."
-        echo "If you already added it, future builds will use the SAME key."
+        echo "Copy the text after 'SHA1:' above and add it to Firebase."
         echo "============================================================"
       
     - name: Upload APK Artifact
