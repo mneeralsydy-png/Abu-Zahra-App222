@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.ktx.auth
@@ -31,7 +32,6 @@ class MainActivity : AppCompatActivity() {
         auth = Firebase.auth
 
         // 2. إعداد Google Sign In
-        // ملاحظة: هذا الـ Client ID مأخوذ من ملف google-services.json الذي أرسلته سابقاً
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestIdToken("787676787951-20uf0a81hb0n5b95t9htb7cd073lu2bm.apps.googleusercontent.com")
             .requestEmail()
@@ -90,7 +90,4 @@ class MainActivity : AppCompatActivity() {
                 }
             }
     }
-    
-    // استيراد ApiException
-    import com.google.android.gms.common.api.ApiException
 }
