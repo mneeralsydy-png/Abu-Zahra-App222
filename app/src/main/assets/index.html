@@ -4,287 +4,420 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
-        body { font-family: 'Tajawal', sans-serif; background-color: #0F172A; color: #E2E8F0; overflow: hidden; }
+        body { font-family: 'Tajawal', sans-serif; background-color: #0F172A; color: #E2E8F0; overflow-x: hidden; }
+        .glass-panel { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .golden-text-title { font-family: 'Amiri', serif; background: linear-gradient(45deg, #bf953f, #fcf6ba, #b38728); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         
-        /* إدارة الشاشات */
-        .screen { display: none; position: fixed; inset: 0; flex-direction: column; }
-        .screen.active { display: flex; }
+        /* Modals */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 100; display: none; align-items: center; justify-content: center; padding: 1rem; }
+        .modal-overlay.active { display: flex; }
+        .modal-content { background: #1E293B; border-radius: 1.5rem; width: 100%; max-width: 400px; max-height: 90vh; overflow-y: auto; border: 1px solid rgba(255,255,255,0.1); }
         
-        /* التنسيقات */
-        .glass-panel { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .golden-text-title { font-family: 'Amiri', serif; background: linear-gradient(45deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c); background-size: 200% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: shine 4s linear infinite; }
-        @keyframes shine { to { background-position: 200% center; } }
+        /* Map */
+        #map { height: 200px; width: 100%; border-radius: 1rem; z-index: 10; }
         
-        /* تأثيرات */
-        .pulse-dot { animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
+        /* Pulse Animation */
+        .pulse-live { animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
     </style>
 </head>
 <body class="bg-slate-900">
 
-    <!-- 1. شاشة التحميل (Splash) -->
-    <div id="screen-splash" class="screen active items-center justify-center bg-gradient-to-b from-slate-900 to-blue-900">
-        <div class="text-center">
-            <h1 class="text-7xl golden-text-title">Abu Al-Zahra</h1>
-            <p class="text-blue-300 text-sm tracking-widest mt-4">PARENTAL CONTROL SYSTEM</p>
-            <div class="mt-8 w-10 h-10 border-4 border-blue-500 border-dashed rounded-full animate-spin mx-auto"></div>
+    <!-- === الشريط العلوي (Header) === -->
+    <header class="sticky top-0 z-50 bg-slate-900/90 backdrop-blur-lg border-b border-slate-700 px-4 py-3 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <button onclick="openModal('modal-profile')" class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold shadow-lg">
+                <span id="header-avatar">A</span>
+            </button>
+            <div>
+                <h1 class="text-lg font-bold text-white">Abu <span class="golden-text-title">Al-Zahra</span></h1>
+                <div class="flex items-center gap-2">
+                    <div id="status-dot" class="w-2 h-2 rounded-full bg-green-500 pulse-live"></div>
+                    <span id="status-text" class="text-[10px] text-green-400">متصل الآن</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-2 bg-slate-800 px-3 py-1 rounded-full border border-slate-700">
+            <svg class="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zm6-4a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zm6-3a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/></svg>
+            <span id="battery-level" class="text-xs text-white font-bold">98%</span>
+        </div>
+    </header>
+
+    <main class="p-4 space-y-6 pb-24">
+        
+        <!-- === قسم الخريطة (Live Location) === -->
+        <section>
+            <h3 class="text-gray-400 text-xs font-bold mb-2 flex items-center gap-1">
+                <span>الموقع المباشر</span>
+                <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+            </h3>
+            <div class="glass-panel rounded-2xl overflow-hidden shadow-xl">
+                <div id="map" class="w-full"></div>
+                <div class="p-3 bg-slate-800/50 flex justify-between items-center">
+                    <div>
+                        <p class="text-white text-sm font-bold" id="location-address">جاري تحديد الموقع...</p>
+                        <p class="text-gray-400 text-[10px]" id="location-time">آخر تحديث: --:--</p>
+                    </div>
+                    <button onclick="centerMap()" class="bg-blue-600 text-white text-xs px-3 py-1 rounded-lg">تحديث</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- === قسم أدوات الوصول الحي (Live Access) === -->
+        <section>
+            <h3 class="text-gray-400 text-xs font-bold mb-2">أدوات الوصول الحي</h3>
+            <div class="grid grid-cols-3 gap-3">
+                <!-- بث الشاشة -->
+                <button onclick="startStream('screen')" class="bg-slate-800 rounded-2xl p-4 flex flex-col items-center hover:bg-slate-700 transition shadow-lg border border-slate-700">
+                    <div class="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center mb-2">
+                        <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                    </div>
+                    <span class="text-[11px] font-bold text-gray-200">بث الشاشة</span>
+                </button>
+                
+                <!-- الكاميرا -->
+                <button onclick="startStream('camera')" class="bg-slate-800 rounded-2xl p-4 flex flex-col items-center hover:bg-slate-700 transition shadow-lg border border-slate-700">
+                    <div class="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center mb-2">
+                        <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                    </div>
+                    <span class="text-[11px] font-bold text-gray-200">الكاميرا</span>
+                </button>
+                
+                <!-- الاستماع -->
+                <button onclick="startStream('microphone')" class="bg-slate-800 rounded-2xl p-4 flex flex-col items-center hover:bg-slate-700 transition shadow-lg border border-slate-700">
+                    <div class="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center mb-2">
+                        <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
+                    </div>
+                    <span class="text-[11px] font-bold text-gray-200">الاستماع</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- === قسم المراسلة والسجلات === -->
+        <section>
+            <h3 class="text-gray-400 text-xs font-bold mb-2">المراسلة والسجلات</h3>
+            <div class="space-y-2">
+                <!-- واتساب -->
+                <button onclick="openLogs('whatsapp')" class="w-full glass-panel rounded-xl p-4 flex items-center gap-4 hover:bg-slate-700/50 transition">
+                    <div class="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center text-white font-bold shadow">W</div>
+                    <div class="flex-1 text-right">
+                        <h4 class="text-white font-bold text-sm">سجلات الواتساب</h4>
+                        <p class="text-gray-400 text-[10px]" id="count-whatsapp">0 رسالة جديدة</p>
+                    </div>
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                </button>
+                
+                <!-- ماسنجر -->
+                <button onclick="openLogs('messenger')" class="w-full glass-panel rounded-xl p-4 flex items-center gap-4 hover:bg-slate-700/50 transition">
+                    <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold shadow">M</div>
+                    <div class="flex-1 text-right">
+                        <h4 class="text-white font-bold text-sm">سجلات الماسنجر</h4>
+                        <p class="text-gray-400 text-[10px]" id="count-messenger">0 رسالة جديدة</p>
+                    </div>
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                </button>
+                
+                <!-- الإشعارات -->
+                <button onclick="openLogs('notifications')" class="w-full glass-panel rounded-xl p-4 flex items-center gap-4 hover:bg-slate-700/50 transition">
+                    <div class="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center text-white font-bold shadow">N</div>
+                    <div class="flex-1 text-right">
+                        <h4 class="text-white font-bold text-sm">الإشعارات</h4>
+                        <p class="text-gray-400 text-[10px]" id="count-notifications">0 إشعار</p>
+                    </div>
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                </button>
+                
+                <!-- الرسائل SMS -->
+                <button onclick="openLogs('sms')" class="w-full glass-panel rounded-xl p-4 flex items-center gap-4 hover:bg-slate-700/50 transition">
+                    <div class="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold shadow">S</div>
+                    <div class="flex-1 text-right">
+                        <h4 class="text-white font-bold text-sm">الرسائل النصية</h4>
+                        <p class="text-gray-400 text-[10px]" id="count-sms">0 رسالة</p>
+                    </div>
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                </button>
+            </div>
+        </section>
+
+        <!-- === قسم السجل والإدارة === -->
+        <section>
+            <h3 class="text-gray-400 text-xs font-bold mb-2">السجل والإدارة</h3>
+            <div class="grid grid-cols-2 gap-3">
+                <!-- سجل المكالمات -->
+                <button onclick="openLogs('calls')" class="bg-slate-800 rounded-xl p-4 flex flex-col items-center justify-center h-24 hover:bg-slate-700 transition border border-slate-700 shadow">
+                    <svg class="w-6 h-6 text-blue-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
+                    <span class="text-[10px] font-bold text-gray-200">سجل المكالمات</span>
+                </button>
+                
+                <!-- إدارة التطبيقات -->
+                <button onclick="openAppManager()" class="bg-slate-800 rounded-xl p-4 flex flex-col items-center justify-center h-24 hover:bg-slate-700 transition border border-slate-700 shadow">
+                    <svg class="w-6 h-6 text-green-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+                    <span class="text-[10px] font-bold text-gray-200">إدارة التطبيقات</span>
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ==================== النوافذ المنبثقة (Modals) ==================== -->
+
+    <!-- 1. نافذة الملف الشخصي -->
+    <div id="modal-profile" class="modal-overlay" onclick="closeModal('modal-profile')">
+        <div class="modal-content p-6 text-center" onclick="event.stopPropagation()">
+            <div class="w-20 h-20 bg-blue-600 rounded-full mx-auto mb-4 flex items-center justify-center text-white text-3xl font-bold shadow-lg">A</div>
+            <h3 class="text-lg font-bold text-white mb-1" id="profile-device-name">جهاز الطفل</h3>
+            <p class="text-gray-400 text-sm mb-6" id="profile-email">user@example.com</p>
+            <button onclick="logout()" class="w-full bg-red-600 text-white py-3 rounded-xl font-bold">تسجيل الخروج</button>
+            <button onclick="closeModal('modal-profile')" class="w-full mt-2 text-gray-400 text-sm py-2">إغلاق</button>
         </div>
     </div>
 
-    <!-- 2. شاشة تسجيل الدخول (مطابقة للتصميم الحديث) -->
-    <div id="screen-login" class="screen items-center justify-center bg-[#0F172A] p-6">
-        <div class="w-full max-w-sm text-center space-y-6">
-            <div class="mb-8">
-                <h2 class="text-5xl golden-text-title">مرحباً</h2>
-                <p class="text-blue-200 text-sm mt-2">سجل الدخول للمتابعة</p>
+    <!-- 2. نافذة البث المباشر (Streaming) -->
+    <div id="modal-stream" class="modal-overlay" onclick="closeStream()">
+        <div class="modal-content bg-black p-0 relative" onclick="event.stopPropagation()">
+            <!-- شريط العلوي داخل البث -->
+            <div class="absolute top-0 left-0 right-0 bg-black/50 p-4 flex justify-between items-center z-10">
+                <div class="flex items-center gap-2">
+                    <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                    <span class="text-white text-xs font-bold">LIVE</span>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="toggleCamera()" id="btn-toggle-cam" class="bg-white/20 text-white text-xs px-2 py-1 rounded hidden">تدوير</button>
+                    <button onclick="closeStream()" class="text-white font-bold">✕</button>
+                </div>
             </div>
             
-            <div class="glass-panel rounded-3xl p-6 space-y-4 border border-white/10 shadow-2xl">
-                <!-- حقل البريد -->
-                <div class="text-right">
-                    <label class="text-blue-200 text-xs block mb-1">البريد الإلكتروني</label>
-                    <input id="txt-email" type="email" class="w-full bg-white/5 border border-white/20 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-blue-400 text-sm" placeholder="example@email.com">
+            <!-- منطقة العرض -->
+            <div class="w-full aspect-[3/4] bg-slate-900 flex items-center justify-center">
+                <video id="stream-player" class="w-full h-full object-cover hidden" autoplay playsinline></video>
+                <div id="stream-placeholder" class="text-center">
+                    <svg class="w-16 h-16 text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                    <p class="text-gray-500 text-sm" id="stream-status-text">جاري الاتصال...</p>
                 </div>
-                
-                <!-- حقل كلمة المرور -->
-                <div class="text-right">
-                    <label class="text-blue-200 text-xs block mb-1">كلمة المرور</label>
-                    <input id="txt-pass" type="password" class="w-full bg-white/5 border border-white/20 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-blue-400 text-sm" placeholder="********">
-                </div>
-                
-                <!-- رابط نسيت كلمة المرور -->
-                <div class="text-left">
-                    <a href="#" onclick="showToast('ميزة قيد التطوير')" class="text-blue-400 text-xs hover:underline">نسيت كلمة المرور؟</a>
-                </div>
-
-                <!-- زر تسجيل الدخول -->
-                <button onclick="handleLogin()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-blue-500 transition">تسجيل الدخول</button>
-                
-                <!-- فاصل -->
-                <div class="flex items-center gap-2 text-blue-300 text-xs">
-                    <div class="flex-1 h-[1px] bg-white/20"></div><span>أو</span><div class="flex-1 h-[1px] bg-white/20"></div>
-                </div>
-                
-                <!-- زر جوجل -->
-                <button onclick="handleGoogleLogin()" class="w-full bg-white text-gray-800 py-3 rounded-xl font-bold shadow-lg hover:bg-gray-100 transition flex items-center justify-center gap-2">
-                    <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-                    <span>الدخول بجوجل</span>
-                </button>
-
-                <!-- زر إنشاء حساب -->
-                <button onclick="handleRegister()" class="w-full bg-green-600 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-green-500 transition mt-2">إنشاء حساب جديد</button>
-                
-                <p id="auth-error" class="text-red-400 text-xs mt-2 text-center hidden"></p>
-            </div>
-            
-            <!-- الشروط والسياسات -->
-            <p class="text-gray-500 text-xs px-4">
-                بالمتابعة، أنت توافق على 
-                <a href="#" class="text-blue-400 hover:underline">شروط الخدمة</a> وتقر بقراءة 
-                <a href="#" class="text-blue-400 hover:underline">سياسة الخصوصية</a>.
-            </p>
-        </div>
-    </div>
-
-    <!-- 3. شاشة الربط (Binding - 9 Digits) -->
-    <div id="screen-binding" class="screen items-center justify-center bg-[#0F172A] p-6">
-        <div class="text-center w-full max-w-sm">
-            <div class="w-20 h-20 mx-auto bg-green-500/20 rounded-full flex items-center justify-center mb-4">
-                <svg class="w-10 h-10 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" /></svg>
-            </div>
-            <h2 class="text-2xl text-white font-bold mb-2">ربط جهاز جديد</h2>
-            <p class="text-gray-400 text-sm mb-6">أدخل هذا الكود في تطبيق الطفل</p>
-            
-            <!-- عرض الكود -->
-            <div class="bg-slate-800 border-2 border-dashed border-green-500 rounded-xl p-4 mb-6">
-                <p class="text-gray-400 text-xs mb-1">كود الربط (9 أرقام)</p>
-                <p id="display-code" class="text-4xl font-mono tracking-widest text-white font-bold">000 000 000</p>
-            </div>
-
-            <div class="flex items-center justify-center gap-2 text-gray-400 text-xs mb-4">
-                <div class="w-2 h-2 rounded-full bg-green-500 pulse-dot"></div>
-                <span id="bind-status">في انتظار اتصال جهاز الطفل...</span>
             </div>
         </div>
     </div>
 
-    <!-- 4. الواجهة الرئيسية (Dashboard) -->
-    <div id="screen-main" class="screen bg-[#0F172A]">
-        <!-- Header -->
-        <header class="bg-slate-900/80 border-b border-slate-700 px-4 py-3 flex justify-between items-center shrink-0 z-20">
-            <h1 class="text-lg font-bold text-white">Abu <span class="golden-text-title">Al-Zahra</span></h1>
-            <div class="flex items-center gap-2">
-                <div id="conn-status" class="flex items-center gap-1 px-2 py-1 rounded-full bg-green-900 text-[10px] font-bold text-green-300">
-                    <div class="w-2 h-2 rounded-full bg-green-400 pulse-dot"></div>
-                    <span>ONLINE</span>
-                </div>
-                <button onclick="logout()" class="text-xs text-gray-400 border border-gray-600 rounded-full px-2 py-1">خروج</button>
+    <!-- 3. نافذة السجلات (Logs Generic) -->
+    <div id="modal-logs" class="modal-overlay" onclick="closeModal('modal-logs')">
+        <div class="modal-content h-5/6 flex flex-col" onclick="event.stopPropagation()">
+            <div class="p-4 border-b border-slate-700 flex justify-between items-center">
+                <h3 id="logs-title" class="font-bold text-white">السجلات</h3>
+                <button onclick="closeModal('modal-logs')" class="text-gray-400 text-xl">✕</button>
             </div>
-        </header>
-
-        <main class="flex-1 overflow-y-auto p-4 pb-24">
-            <!-- Device Card -->
-            <div id="device-card" class="glass-panel rounded-2xl p-4 mb-4 flex items-center gap-4 border border-slate-700">
-                <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold shadow-lg">S</div>
-                <div class="flex-1">
-                    <h2 class="font-bold text-white">جهاز الطفل</h2>
-                    <div class="flex items-center gap-2 text-gray-400 text-xs">
-                        <span id="txt-battery">85%</span> | <span>الرياض</span>
-                    </div>
-                </div>
+            <div id="logs-list" class="flex-1 overflow-y-auto p-4 space-y-3">
+                <!-- سيتم ملؤها بالجافاسكربت -->
             </div>
-
-            <!-- Quick Stats -->
-            <div class="grid grid-cols-2 gap-2 mb-4">
-                <div class="glass-panel rounded-xl p-3 text-center border border-slate-700">
-                    <p class="text-2xl font-bold text-white">3h</p>
-                    <p class="text-gray-500 text-[10px]">وقت الشاشة</p>
-                </div>
-                <div class="glass-panel rounded-xl p-3 text-center border border-slate-700">
-                    <p class="text-2xl font-bold text-white">0</p>
-                    <p class="text-gray-500 text-[10px]">تنبيهات</p>
-                </div>
-            </div>
-
-            <!-- Control Tools -->
-            <h3 class="text-gray-400 text-xs font-bold mb-2">التحكم المباشر</h3>
-            <div class="grid grid-cols-3 gap-3 mb-6">
-                <button onclick="sendCommand('location')" class="bg-slate-800 rounded-xl p-3 flex flex-col items-center justify-center h-24 hover:bg-slate-700 transition border border-slate-700">
-                    <div class="w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center mb-1">
-                        <svg class="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /></svg>
-                    </div>
-                    <span class="text-[10px] font-bold text-gray-200">الموقع</span>
-                </button>
-                <button onclick="sendCommand('lock')" class="bg-slate-800 rounded-xl p-3 flex flex-col items-center justify-center h-24 hover:bg-slate-700 transition border border-slate-700">
-                    <div class="w-10 h-10 bg-yellow-500/20 rounded-full flex items-center justify-center mb-1">
-                        <svg class="w-5 h-5 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-                    </div>
-                    <span class="text-[10px] font-bold text-gray-200">قفل</span>
-                </button>
-                <button onclick="sendCommand('apps')" class="bg-slate-800 rounded-xl p-3 flex flex-col items-center justify-center h-24 hover:bg-slate-700 transition border border-slate-700">
-                    <div class="w-10 h-10 bg-purple-500/20 rounded-full flex items-center justify-center mb-1">
-                        <svg class="w-5 h-5 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
-                    </div>
-                    <span class="text-[10px] font-bold text-gray-200">التطبيقات</span>
-                </button>
-            </div>
-        </main>
+        </div>
     </div>
 
-    <!-- JavaScript Logic -->
+    <!-- 4. نافذة إدارة التطبيقات -->
+    <div id="modal-apps" class="modal-overlay" onclick="closeModal('modal-apps')">
+        <div class="modal-content h-5/6 flex flex-col" onclick="event.stopPropagation()">
+            <div class="p-4 border-b border-slate-700 flex justify-between items-center">
+                <h3 class="font-bold text-white">التطبيقات المثبتة</h3>
+                <button onclick="closeModal('modal-apps')" class="text-gray-400 text-xl">✕</button>
+            </div>
+            <div id="apps-list" class="flex-1 overflow-y-auto p-4 space-y-2">
+                <p class="text-center text-gray-500 text-sm">جاري تحميل التطبيقات...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== JavaScript Logic ==================== -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script>
-        // --- Native Bridge (التواصل مع كود Kotlin) ---
-        function callNative(fn, arg) {
-            if (typeof AndroidNative !== 'undefined') {
-                if (arg) AndroidNative[fn](arg); else AndroidNative[fn]();
-            } else {
-                console.warn(`Native bridge (${fn}) not found.`);
-                // محاكاة للاختبار في المتصفح (لمدة التطوير فقط)
-                simulateNative(fn, arg);
+        // === إعداد Firebase (استبدلها ببياناتك) ===
+        const firebaseConfig = {
+            apiKey: "AIzaSyASBVIQ0AvrsLqAgbT9k6L7bCpZKoqdvjo", // من ملف الوالد
+            authDomain: "studio-7073076148-6afe0.firebaseapp.com",
+            projectId: "studio-7073076148-6afe0",
+            storageBucket: "studio-7073076148-6afe0.appspot.com",
+            messagingSenderId: "787676787951",
+            appId: "1:787676787951:android:78bb939f7ab24b0494171a"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+
+        let currentDeviceId = null;
+        let map, marker;
+
+        // === التهيئة عند التحميل ===
+        document.addEventListener('DOMContentLoaded', () => {
+            initMap();
+            // استدعاء دالة من Kotlin للتحقق من المستخدم
+            if(typeof AndroidNative !== 'undefined') AndroidNative.checkUserStatus();
+            else initDummyData(); // للتجربة بدون تطبيق
+        });
+
+        // === ردود الفعل من Kotlin (Callbacks) ===
+        window.onAuthSuccess = function(uid, deviceId) {
+            currentDeviceId = deviceId;
+            loadDashboardData(deviceId);
+        };
+
+        // === تحميل بيانات الداشبورد (Realtime) ===
+        function loadDashboardData(deviceId) {
+            // 1. الاستماع لحالة الجهاز (بطارية، اتصال)
+            db.collection('parents').doc('PARENT_UID').collection('children').doc(deviceId).onSnapshot(doc => {
+                if(doc.exists) {
+                    updateStatus(doc.data());
+                }
+            });
+
+            // 2. الاستماع للموقع (Realtime)
+            db.collection('parents').doc('PARENT_UID').collection('children').doc(deviceId).collection('location').doc('current').onSnapshot(doc => {
+                if(doc.exists) updateMap(doc.data());
+            });
+
+            // 3. جلب السجلات (يمكن عمل Pagination للأداء)
+            loadCounts(deviceId);
+            loadApps(deviceId);
+        }
+
+        function updateStatus(data) {
+            document.getElementById('battery-level').innerText = data.battery + '%';
+            document.getElementById('status-text').innerText = data.is_online ? 'متصل الآن' : 'غير متصل';
+            document.getElementById('status-dot').className = data.is_online ? 'w-2 h-2 rounded-full bg-green-500 pulse-live' : 'w-2 h-2 rounded-full bg-red-500';
+        }
+
+        // === وظائف الخريطة ===
+        function initMap() {
+            map = L.map('map').setView([24.7136, 46.6753], 13); // الرياض كموقع مبدئي
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '' }).addTo(map);
+            marker = L.marker([24.7136, 46.6753]).addTo(map);
+        }
+
+        function updateMap(loc) {
+            if(loc && loc.lat && loc.lng) {
+                const newLatLng = [loc.lat, loc.lng];
+                marker.setLatLng(newLatLng);
+                map.setView(newLatLng, 15);
+                // يمكن إضافة Geocoding هنا لتحويل الإحداثيات لعنوان
+                document.getElementById('location-address').innerText = "تم تحديث الموقع";
+                document.getElementById('location-time').innerText = new Date().toLocaleTimeString('ar');
             }
         }
 
-        function showScreen(id) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        // === وظائف البث (Streaming) ===
+        function startStream(type) {
+            openModal('modal-stream');
+            document.getElementById('stream-status-text').innerText = "جاري الاتصال بجهاز الطفل...";
+            document.getElementById('stream-player').classList.add('hidden');
+            document.getElementById('stream-placeholder').classList.remove('hidden');
+            
+            // إرسال أمر للطفل ببدء البث
+            sendCommand('start_stream', { type: type });
+            
+            // الاستماع لرابط البث (WebRTC signaling placeholder)
+            // في الواقع ستحتاج لـ WebSocket هنا
+            setTimeout(() => {
+                // محاكاة اتصال ناجح
+                document.getElementById('stream-status-text').innerText = "متصل";
+                // viewStream(url);
+            }, 3000);
+        }
+
+        function viewStream(url) {
+            const video = document.getElementById('stream-player');
+            video.src = url;
+            video.play();
+            video.classList.remove('hidden');
+            document.getElementById('stream-placeholder').classList.add('hidden');
+        }
+
+        function toggleCamera() {
+            sendCommand('switch_camera');
+        }
+
+        // === وظائف السجلات (Logs) ===
+        function openLogs(type) {
+            openModal('modal-logs');
+            const list = document.getElementById('logs-list');
+            list.innerHTML = '<p class="text-center text-gray-400">لا توجد بيانات</p>';
+            
+            const titles = { whatsapp: 'واتساب', messenger: 'ماسنجر', notifications: 'إشعارات', sms: 'رسائل SMS', calls: 'المكالمات' };
+            document.getElementById('logs-title').innerText = titles[type] || 'سجلات';
+
+            // جلب البيانات من Firestore
+            db.collection('parents').doc('PARENT_UID').collection('children').doc(currentDeviceId).collection(type).orderBy('timestamp', 'desc').limit(50).get().then(snapshot => {
+                if(snapshot.empty) return;
+                list.innerHTML = '';
+                snapshot.forEach(doc => {
+                    const d = doc.data();
+                    list.appendChild(createLogItem(type, d));
+                });
+            });
+        }
+
+        function createLogItem(type, data) {
+            const div = document.createElement('div');
+            div.className = "bg-slate-700 p-3 rounded-lg";
+            
+            let html = '';
+            if(type === 'whatsapp' || type === 'messenger' || type === 'sms') {
+                html = `<div class="flex justify-between mb-1"><span class="text-white font-bold">${data.sender || data.phone}</span><span class="text-gray-400 text-[10px]">${new Date(data.timestamp?.seconds * 1000).toLocaleString('ar')}</span></div><p class="text-gray-300 text-sm">${data.body || data.message}</p>`;
+            } else if (type === 'notifications') {
+                html = `<div class="font-bold text-white text-sm">${data.app_name}</div><p class="text-gray-300 text-xs">${data.title}: ${data.text}</p>`;
+            } else if (type === 'calls') {
+                html = `<div class="flex justify-between"><span class="text-white">${data.phone}</span><span class="text-xs ${data.type === 'incoming' ? 'text-green-400' : 'text-blue-400'}">${data.duration}</span></div>
+                        ${data.audio_url ? `<button onclick="playAudio('${data.audio_url}')" class="text-blue-400 text-xs mt-2 underline">استمع للتسجيل</button>` : ''}`;
+            }
+            div.innerHTML = html;
+            return div;
+        }
+
+        // === إدارة التطبيقات ===
+        function loadApps(deviceId) {
+            // جلب من Firestore أو طلب من Child عبر Command
+        }
+
+        function openAppManager() {
+            openModal('modal-apps');
+            // جلب قائمة التطبيقات من DB
+        }
+
+        function createAppItem(app) {
+            return `
+            <div class="bg-slate-700 rounded-lg p-3 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <img src="${app.icon}" class="w-8 h-8 rounded">
+                    <span class="text-white text-sm">${app.name}</span>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="lockApp('${app.package}')" class="text-xs bg-red-500 px-2 py-1 rounded">قفل</button>
+                </div>
+            </div>`;
+        }
+
+        // === أدوات مساعدة ===
+        function openModal(id) {
             document.getElementById(id).classList.add('active');
         }
-
-        // --- Auth Logic ---
-        function handleLogin() {
-            const email = document.getElementById('txt-email').value;
-            const pass = document.getElementById('txt-pass').value;
-            if(!email || !pass) return;
-            callNative('loginUser', JSON.stringify({email: email, pass: pass}));
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
         }
 
-        function handleRegister() {
-            const email = document.getElementById('txt-email').value;
-            const pass = document.getElementById('txt-pass').value;
-            if(!email || !pass) return;
-            callNative('registerUser', JSON.stringify({email: email, pass: pass}));
-        }
-        
-        function handleGoogleLogin() {
-            callNative('loginWithGoogle');
+        function sendCommand(cmd, extra = {}) {
+            if(typeof AndroidNative !== 'undefined') AndroidNative.sendCommand(cmd, JSON.stringify(extra));
         }
 
         function logout() {
-            callNative('logoutUser');
-            showScreen('screen-login');
+            if(typeof AndroidNative !== 'undefined') AndroidNative.logout();
         }
 
-        // --- Binding Logic ---
-        function generateCode() {
-            // توليد كود عشوائي من 9 أرقام
-            const code = Math.floor(100000000 + Math.random() * 900000000);
-            return code.toString().substring(0,3) + " " + code.toString().substring(3,6) + " " + code.toString().substring(6);
+        // بيانات تجريبية للتصميم
+        function initDummyData() {
+            updateStatus({battery: 85, is_online: true});
         }
-
-        // --- Native Callbacks (يتم استدعاؤها من Kotlin) ---
-        
-        // يتم استدعاؤها عند نجاح تسجيل الدخول/التسجيل
-        window.onAuthSuccess = function(uid) {
-            showScreen('screen-binding');
-            const code = generateCode();
-            document.getElementById('display-code').innerText = code;
-            // إرسال الكود لـ Kotlin لبدء الاستماع
-            // إزالة المسافات قبل الإرسال
-            callNative('startListeningForChild', code.replace(/\s/g, ''));
-        };
-
-        // يتم استدعاؤها عند حدوث خطأ
-        window.onAuthError = function(msg) {
-            document.getElementById('auth-error').innerText = msg;
-            document.getElementById('auth-error').classList.remove('hidden');
-        };
-
-        // يتم استدعاؤها عند اكتشاف جهاز طفل جديد (Real-time)
-        window.onChildLinked = function() {
-            showScreen('screen-main');
-        };
-        
-        // تحديث البيانات في الواجهة (مثل البطارية)
-        window.updateChildData = function(dataJson) {
-            try {
-                const data = JSON.parse(dataJson);
-                if(data.battery) document.getElementById('txt-battery').innerText = data.battery + "%";
-            } catch(e) {}
-        };
-
-        // --- Dashboard Logic ---
-        function sendCommand(cmd) {
-            callNative('sendCommandToChild', cmd);
-        }
-        
-        // مساعد لواجهة المستخدم
-        window.showToast = function(msg) {
-            alert(msg);
-        }
-
-        // --- Simulation for Browser Testing ---
-        function simulateNative(fn, arg) {
-            console.log(`Simulating: ${fn}`);
-            if(fn === 'loginUser' || fn === 'registerUser') {
-                setTimeout(() => onAuthSuccess('test_uid'), 500);
-            }
-            if(fn === 'startListeningForChild') {
-                setTimeout(() => onChildLinked(), 2000);
-            }
-        }
-
-        // === حل مشكلة التعليق: Safety Timeout ===
-        // إذا لم يستجب التطبيق خلال 4 ثواني، انتقل لشاشة الدخول
-        setTimeout(function(){
-            if(document.getElementById('screen-splash').classList.contains('active')){
-                console.log("Safety Timeout Triggered");
-                showScreen('screen-login');
-            }
-        }, 4000);
-
-        // بدء التشغيل
-        setTimeout(function(){ callNative('checkUserStatus'); }, 500);
 
     </script>
 </body>
