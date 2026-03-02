@@ -320,13 +320,14 @@
             }
         };
 
+        // تم الإصلاح هنا: التعامل مع argument فارغ
         window.onChildLinked = function(configJson){
-            try {
-                currentConfig = JSON.parse(configJson);
-                document.getElementById('profile-email').innerText = currentConfig.email || 'Parent User';
-                showScreen('screen-main');
-                loadDashboardData();
-            } catch(e) { console.error("Config Parse Error", e); }
+            resetButtons();
+            if(configJson) {
+                try { currentConfig = JSON.parse(configJson); } catch(e) {}
+            }
+            showScreen('screen-main');
+            loadDashboardData();
         };
 
         window.showLoginScreen = function(){ resetButtons(); showScreen('screen-login'); };
