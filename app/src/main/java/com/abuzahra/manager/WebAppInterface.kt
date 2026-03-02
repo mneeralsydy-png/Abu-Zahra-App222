@@ -33,23 +33,25 @@ class WebAppInterface(private val mContext: Context) {
                 // 1. التحقق إذا كان الطفل مربوطاً بالفعل
                 val childrenSnapshot = parentRef.collection("children").limit(1).get().await()
                 if (!childrenSnapshot.isEmpty) {
-                    sendResultToUI("window.onChildLinked()")
+                    // === الإصلاح: إرسال البيانات للواجهة ==
+                    val deviceId = childrenSnapshot.documents[0].id
+                    val config = JSONObject().apply {
+                        put("parentId", uid)
+                        put("deviceId", deviceId)
+                        put("email", user.email)
+                    }.toString()
+                    sendResultToUI("window.onChildLinked('$config')")
                     return@launch
                 }
 
-                // 2. التحقق من وجود كود محفوظ وصحيح (9 أرقام)
+                // 2. الطفل غير مربوط -> التحقق من الكود
                 val parentDoc = parentRef.get().await()
                 val existingCode = parentDoc.getString("binding_code")
                 
-                // الشرط: يجب أن يكون الكود موجوداً وطوله 9 أرقام
                 if (!existingCode.isNullOrEmpty() && existingCode.length == 9) {
-                    // كود صحيح موجود -> عرضه
                     sendResultToUI("window.onAuthSuccess('$existingCode')")
                 } else {
-                    // لا يوجد كود أو الكود قديم (طويل) -> توليد كود جديد
                     val newCode = (100000000..999999999).random().toString()
-                    
-                    // حفظ الكود الجديد (سيستبدل القديم إن وجد)
                     parentRef.set(mapOf("binding_code" to newCode), SetOptions.merge()).await()
                     sendResultToUI("window.onAuthSuccess('$newCode')")
                 }
@@ -67,7 +69,7 @@ class WebAppInterface(private val mContext: Context) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 auth.signInWithEmailAndPassword(data.getString("email"), data.getString("pass")).await()
-                checkUserStatus() 
+                checkUserStatus()
             } catch (e: Exception) { sendResultToUI("window.onAuthError('${e.message}')") }
         }
     }
@@ -78,7 +80,7 @@ class WebAppInterface(private val mContext: Context) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 auth.createUserWithEmailAndPassword(data.getString("email"), data.getString("pass")).await()
-                checkUserStatus() 
+                checkUserStatus()
             } catch (e: Exception) { sendResultToUI("window.onAuthError('${e.message}')") }
         }
     }
@@ -94,24 +96,24 @@ class WebAppInterface(private val mContext: Context) {
         val codeRef = db.collection("linking_codes").document(code)
         
         CoroutineScope(Dispatchers.IO).launch {
-            try { 
-                codeRef.set(mapOf("parent_uid" to uid)).await()
-                Log.d("ParentApp", "Listening started for code: $code")
-            } catch (e: Exception) { 
-                Log.e("ParentApp", "Failed to write code", e) 
-            }
+            try { codeRef.set(mapOf("parent_uid" to uid)).await() } catch (e: Exception) { Log.e("ParentApp", "Code error", e) }
         }
 
         listenerRegistration = db.collection("parents").document(uid).collection("children")
             .addSnapshotListener { snapshot, e ->
-                if (e != null) {
-                    Log.e("ParentApp", "Listener FAILED", e)
-                    return@addSnapshotListener
-                }
+                if (e != null) { Log.e("ParentApp", "Listener FAILED", e); return@addSnapshotListener }
                 
                 if (snapshot != null && !snapshot.isEmpty) {
                     listenerRegistration?.remove()
-                    sendResultToUI("window.onChildLinked()")
+                    
+                    // === الإصلاح: إرسال البيانات للواجهة عند الربط الجديد ==
+                    val deviceId = snapshot.documents[0].id
+                    val config = JSONObject().apply {
+                        put("parentId", uid)
+                        put("deviceId", deviceId)
+                        put("email", auth.currentUser?.email ?: "")
+                    }.toString()
+                    sendResultToUI("window.onChildLinked('$config')")
                 }
             }
     }
