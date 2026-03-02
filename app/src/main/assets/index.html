@@ -24,20 +24,19 @@
 </head>
 <body class="bg-slate-900">
 
-    <!-- === 1. شاشة التحميل (Splash) === -->
+    <!-- 1. Splash -->
     <div id="screen-splash" class="screen active items-center justify-center bg-gradient-to-b from-slate-900 to-blue-900">
         <h1 class="text-7xl golden-text-title">Abu Al-Zahra</h1>
         <div class="mt-8 w-10 h-10 border-4 border-blue-500 border-dashed rounded-full animate-spin"></div>
     </div>
 
-    <!-- === 2. شاشة تسجيل الدخول (Login) === -->
+    <!-- 2. Login -->
     <div id="screen-login" class="screen items-center justify-center bg-[#0F172A] p-6">
         <div class="w-full max-w-sm text-center space-y-6">
             <div class="mb-8">
                 <h2 class="text-5xl golden-text-title">مرحباً</h2>
                 <p class="text-blue-200 text-sm mt-2">سجل الدخول للمتابعة</p>
             </div>
-            
             <div class="glass-panel rounded-3xl p-6 space-y-4 border border-slate-700">
                 <div class="text-right">
                     <label class="text-blue-200 text-xs block mb-1">البريد الإلكتروني</label>
@@ -47,29 +46,21 @@
                     <label class="text-blue-200 text-xs block mb-1">كلمة المرور</label>
                     <input id="txt-pass" type="password" class="w-full bg-white/5 border border-white/10 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-blue-400 text-sm" placeholder="********">
                 </div>
-                <div class="text-left">
-                    <a href="#" onclick="alert('ميزة قيد التطوير')" class="text-blue-400 text-xs hover:underline">نسيت كلمة المرور؟</a>
-                </div>
-
                 <button id="btn-login" onclick="handleLogin()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-blue-500 transition">تسجيل الدخول</button>
-                
                 <div class="flex items-center gap-2 text-blue-300 text-xs">
                     <div class="flex-1 h-[1px] bg-white/20"></div><span>أو</span><div class="flex-1 h-[1px] bg-white/20"></div>
                 </div>
-                
                 <button id="btn-google" onclick="handleGoogleLogin()" class="w-full bg-white text-gray-800 py-3 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 hover:bg-gray-100 transition">
                     <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
                     <span>الدخول بجوجل</span>
                 </button>
-
                 <button id="btn-register" onclick="handleRegister()" class="w-full bg-green-600 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-green-500 transition mt-2">إنشاء حساب جديد</button>
-                
                 <p id="auth-error" class="text-red-400 text-xs mt-2 hidden"></p>
             </div>
         </div>
     </div>
 
-    <!-- === 3. شاشة الربط (Binding) === -->
+    <!-- 3. Binding -->
     <div id="screen-binding" class="screen items-center justify-center bg-[#0F172A] p-6">
         <div class="text-center w-full max-w-sm">
             <div class="w-20 h-20 mx-auto bg-green-500/20 rounded-full flex items-center justify-center mb-4">
@@ -84,7 +75,7 @@
         </div>
     </div>
 
-    <!-- === 4. لوحة التحكم (Dashboard) - الكاملة === -->
+    <!-- 4. Dashboard -->
     <div id="screen-main" class="screen bg-[#0F172A]">
         <header class="bg-slate-900/80 border-b border-slate-700 px-4 py-3 flex justify-between items-center shrink-0 z-20">
             <div class="flex items-center gap-3">
@@ -105,7 +96,7 @@
 
         <main class="p-4 space-y-6 pb-24 overflow-y-auto flex-1">
             
-            <!-- الخريطة -->
+            <!-- Map -->
             <section>
                 <h3 class="text-gray-400 text-xs font-bold mb-2 flex items-center gap-1">الموقع المباشر <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span></h3>
                 <div class="glass-panel rounded-2xl overflow-hidden shadow-xl">
@@ -120,7 +111,7 @@
                 </div>
             </section>
 
-            <!-- أدوات الوصول الحي -->
+            <!-- Live Tools -->
             <section>
                 <h3 class="text-gray-400 text-xs font-bold mb-2">أدوات الوصول الحي</h3>
                 <div class="grid grid-cols-3 gap-3">
@@ -139,7 +130,7 @@
                 </div>
             </section>
 
-            <!-- المراسلة والسجلات -->
+            <!-- Messaging -->
             <section>
                 <h3 class="text-gray-400 text-xs font-bold mb-2">المراسلة والسجلات</h3>
                 <div class="space-y-2">
@@ -161,7 +152,7 @@
                 </div>
             </section>
 
-            <!-- السجل والإدارة -->
+            <!-- Logs & Mgmt -->
             <section>
                 <h3 class="text-gray-400 text-xs font-bold mb-2">السجل والإدارة</h3>
                 <div class="grid grid-cols-2 gap-3">
@@ -178,9 +169,7 @@
         </main>
     </div>
 
-    <!-- === النوافذ المنبثقة (Modals) === -->
-    
-    <!-- الملف الشخصي -->
+    <!-- Modals -->
     <div id="modal-profile" class="modal-overlay" onclick="closeModal('modal-profile')">
         <div class="modal-content p-6 text-center" onclick="event.stopPropagation()">
             <div class="w-20 h-20 bg-blue-600 rounded-full mx-auto mb-4 flex items-center justify-center text-white text-3xl font-bold">A</div>
@@ -191,27 +180,20 @@
         </div>
     </div>
 
-    <!-- البث المباشر -->
     <div id="modal-stream" class="modal-overlay" onclick="closeStream()">
         <div class="modal-content bg-black p-0 relative" onclick="event.stopPropagation()">
             <div class="absolute top-0 left-0 right-0 bg-black/50 p-4 flex justify-between items-center z-10">
                 <div class="flex items-center gap-2"><div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div><span class="text-white text-xs font-bold">LIVE</span></div>
-                <div class="flex gap-2">
-                    <button onclick="toggleCamera()" id="btn-toggle-cam" class="bg-white/20 text-white text-xs px-2 py-1 rounded hidden">تدوير</button>
-                    <button onclick="closeStream()" class="text-white font-bold">✕</button>
-                </div>
+                <button onclick="closeStream()" class="text-white font-bold">✕</button>
             </div>
             <div class="w-full aspect-[3/4] bg-slate-900 flex items-center justify-center">
-                <video id="stream-player" class="w-full h-full object-cover hidden" autoplay playsinline></video>
                 <div id="stream-placeholder" class="text-center">
-                    <svg class="w-16 h-16 text-gray-600 mx-auto mb-4 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-                    <p class="text-gray-500 text-sm" id="stream-status-text">جاري الاتصال...</p>
+                    <p class="text-gray-500 text-sm" id="stream-status-text">ميزة البث تتطلب خادم وسائط (WebRTC).</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- السجلات -->
     <div id="modal-logs" class="modal-overlay" onclick="closeModal('modal-logs')">
         <div class="modal-content h-5/6 flex flex-col" onclick="event.stopPropagation()">
             <div class="p-4 border-b border-slate-700 flex justify-between items-center">
@@ -219,12 +201,11 @@
                 <button onclick="closeModal('modal-logs')" class="text-gray-400 text-xl">✕</button>
             </div>
             <div id="logs-list" class="flex-1 overflow-y-auto p-4 space-y-3">
-                <p class="text-center text-gray-500 text-sm">لا توجد بيانات</p>
+                <p class="text-center text-gray-500 text-sm">جاري التحميل...</p>
             </div>
         </div>
     </div>
     
-    <!-- إدارة التطبيقات -->
     <div id="modal-apps" class="modal-overlay" onclick="closeModal('modal-apps')">
         <div class="modal-content h-5/6 flex flex-col" onclick="event.stopPropagation()">
             <div class="p-4 border-b border-slate-700 flex justify-between items-center">
@@ -232,12 +213,12 @@
                 <button onclick="closeModal('modal-apps')" class="text-gray-400 text-xl">✕</button>
             </div>
             <div id="apps-list" class="flex-1 overflow-y-auto p-4 space-y-2">
-                <p class="text-center text-gray-500 text-sm">جاري التحميل...</p>
+                <p class="text-center text-gray-500 text-sm">البيانات غير متوفرة</p>
             </div>
         </div>
     </div>
 
-    <!-- === JavaScript === -->
+    <!-- JavaScript Logic -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script>
@@ -265,12 +246,7 @@
         function openModal(id){ document.getElementById(id).classList.add('active'); }
         function closeModal(id){ document.getElementById(id).classList.remove('active'); }
 
-        function showError(msg){
-            const el = document.getElementById('auth-error');
-            el.innerText = msg;
-            el.classList.remove('hidden');
-            resetButtons();
-        }
+        function showError(msg){ document.getElementById('auth-error').innerText = msg; document.getElementById('auth-error').classList.remove('hidden'); resetButtons(); }
         function hideError(){ document.getElementById('auth-error').classList.add('hidden'); }
         function setLoading(isLoading) {
             const btns = ['btn-login', 'btn-register', 'btn-google'];
@@ -292,7 +268,7 @@
         function handleRegister(){ 
             const email = document.getElementById('txt-email').value.trim();
             const pass = document.getElementById('txt-pass').value;
-            if(!email || !pass) { showError("يرجى إدخال البريد وكلمة المرور للتسجيل"); return; }
+            if(!email || !pass) { showError("يرجى إدخال البريد وكلمة المرور"); return; }
             hideError(); setLoading(true);
             callNative('registerUser', JSON.stringify({email: email, pass: pass})); 
         }
@@ -305,48 +281,61 @@
             showScreen('screen-binding'); 
             if(code && code.length === 9) {
                 document.getElementById('display-code').innerText = code.substring(0,3) + " " + code.substring(3,6) + " " + code.substring(6);
-            } else {
-                document.getElementById('display-code').innerText = code;
-            }
+            } else { document.getElementById('display-code').innerText = code; }
             callNative('startListeningForChild', code); 
         };
 
         window.onAuthError = function(msg){ 
             resetButtons();
-            if(msg.includes('10') || msg.includes('ApiException')) {
-                showError('خطأ في شهادة التطبيق. تأكد من إضافة SHA-1 في Firebase.');
-            } else {
-                showError(msg);
-            }
+            if(msg.includes('10') || msg.includes('ApiException')) { showError('خطأ في شهادة التطبيق (SHA-1).'); } else { showError(msg); }
         };
 
-        // تم الإصلاح هنا: التعامل مع argument فارغ
+        // === THE FIX: Initialize Config and Start Listeners ===
         window.onChildLinked = function(configJson){
             resetButtons();
-            if(configJson) {
-                try { currentConfig = JSON.parse(configJson); } catch(e) {}
-            }
-            showScreen('screen-main');
-            loadDashboardData();
+            try {
+                currentConfig = JSON.parse(configJson);
+                document.getElementById('profile-email').innerText = currentConfig.email || '';
+                showScreen('screen-main');
+                startDashboardListeners(); // Start listening for data
+            } catch(e) { console.error("Config Parse Error", e); }
         };
 
         window.showLoginScreen = function(){ resetButtons(); showScreen('screen-login'); };
 
-        // Dashboard Logic
-        function loadDashboardData(){
+        // === REALTIME LOGIC ===
+        function startDashboardListeners() {
             if(!currentConfig.parentId) return;
-            db.collection('parents').document(currentConfig.parentId).collection('children').document(currentConfig.deviceId).onSnapshot(doc => {
-                if(doc.exists) updateDashboard(doc.data());
+            const ref = db.collection('parents').document(currentConfig.parentId)
+                           .collection('children').document(currentConfig.deviceId);
+
+            // 1. Listen for Battery and Location
+            ref.onSnapshot(doc => {
+                if(doc.exists){
+                    const data = doc.data();
+                    updateUI(data);
+                }
             });
+            
+            // 2. Listen for Log Counts (Optional but good for realtime counters)
+            // Note: Firestore counts require aggregation, so we will update counts manually when opening logs for simplicity
         }
 
-        function updateDashboard(data){
-            if(data.battery_level) document.getElementById('battery-level').innerText = data.battery_level + '%';
-            if(data.is_online !== undefined) {
-                document.getElementById('status-text').innerText = data.is_online ? 'متصل الآن' : 'غير متصل';
-                document.getElementById('status-dot').className = data.is_online ? 'w-2 h-2 rounded-full bg-green-500 pulse-live' : 'w-2 h-2 rounded-full bg-red-500';
+        function updateUI(data) {
+            // Update Battery
+            if(data.battery_level !== undefined) {
+                document.getElementById('battery-level').innerText = data.battery_level + '%';
             }
-            if(data.location) updateMap(data.location.lat, data.location.lng);
+            // Update Status
+            if(data.is_online !== undefined) {
+                 document.getElementById('status-text').innerText = data.is_online ? 'متصل الآن' : 'غير متصل';
+                 document.getElementById('status-dot').className = data.is_online ? 'w-2 h-2 rounded-full bg-green-500 pulse-live' : 'w-2 h-2 rounded-full bg-red-500';
+            }
+            // Update Map
+            if(data.location) {
+                updateMap(data.location.lat, data.location.lng);
+            }
+            // Update Device Name
             if(data.app_name) document.getElementById('profile-device-name').innerText = data.app_name;
         }
 
@@ -366,9 +355,9 @@
         }
         function centerMap(){ if(marker) map.setView(marker.getLatLng(), 16); }
 
-        function startStream(type){ openModal('modal-stream'); callNative('startStream', type); }
-        function closeStream(){ closeModal('modal-stream'); callNative('stopStream'); }
-        function toggleCamera(){ callNative('toggleCamera'); }
+        // === BUTTON ACTIONS (Fetch Data) ===
+        function startStream(type){ openModal('modal-stream'); }
+        function closeStream(){ closeModal('modal-stream'); }
 
         function openLogs(collection){
             openModal('modal-logs');
@@ -381,6 +370,9 @@
                   if(snap.empty){ list.innerHTML = '<p class="text-center text-gray-500">لا توجد بيانات</p>'; return; }
                   list.innerHTML = '';
                   snap.forEach(doc => { list.appendChild(createLogItem(doc.data())); });
+              }).catch(err => {
+                  list.innerHTML = '<p class="text-center text-red-500">خطأ في تحميل البيانات</p>';
+                  console.error(err);
               });
         }
 
@@ -388,13 +380,16 @@
             const div = document.createElement('div');
             div.className = "bg-slate-700 p-3 rounded-lg";
             let html = '';
-            html += `<div class="flex justify-between mb-1"><span class="text-white font-bold">${d.title || d.phone || d.app_name}</span><span class="text-gray-400 text-[10px]">${d.timestamp ? new Date(d.timestamp.seconds * 1000).toLocaleString('ar') : ''}</span></div>`;
+            html += `<div class="flex justify-between mb-1"><span class="text-white font-bold">${d.title || d.phone || d.app_name || 'Unknown'}</span><span class="text-gray-400 text-[10px]">${d.timestamp ? new Date(d.timestamp.seconds * 1000).toLocaleString('ar') : ''}</span></div>`;
             if(d.body || d.message || d.text) html += `<p class="text-gray-300 text-sm">${d.body || d.message || d.text}</p>`;
             div.innerHTML = html;
             return div;
         }
 
-        function openAppManager(){ openModal('modal-apps'); }
+        function openAppManager(){
+            openModal('modal-apps');
+            // Note: App list needs to be uploaded by child app first
+        }
 
         function callNative(fn, arg){ if(typeof AndroidNative !== 'undefined'){ arg ? AndroidNative[fn](arg) : AndroidNative[fn](); } }
         function logout(){ callNative('logout'); showScreen('screen-login'); }
