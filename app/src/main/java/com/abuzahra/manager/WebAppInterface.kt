@@ -33,21 +33,23 @@ class WebAppInterface(private val mContext: Context) {
                 // 1. التحقق إذا كان الطفل مربوطاً بالفعل
                 val childrenSnapshot = parentRef.collection("children").limit(1).get().await()
                 if (!childrenSnapshot.isEmpty) {
-                    // الطفل مربوط -> اذهب للوحة التحكم
                     sendResultToUI("window.onChildLinked()")
                     return@launch
                 }
 
-                // 2. الطفل غير مربوط -> التحقق من وجود كود محفوظ
+                // 2. التحقق من وجود كود محفوظ وصحيح (9 أرقام)
                 val parentDoc = parentRef.get().await()
+                val existingCode = parentDoc.getString("binding_code")
                 
-                if (parentDoc.exists() && parentDoc.contains("binding_code")) {
-                    // كود موجود مسبقاً -> عرضه
-                    val existingCode = parentDoc.getString("binding_code")
+                // الشرط: يجب أن يكون الكود موجوداً وطوله 9 أرقام
+                if (!existingCode.isNullOrEmpty() && existingCode.length == 9) {
+                    // كود صحيح موجود -> عرضه
                     sendResultToUI("window.onAuthSuccess('$existingCode')")
                 } else {
-                    // لا يوجد كود -> توليد كود جديد وحفظه
+                    // لا يوجد كود أو الكود قديم (طويل) -> توليد كود جديد
                     val newCode = (100000000..999999999).random().toString()
+                    
+                    // حفظ الكود الجديد (سيستبدل القديم إن وجد)
                     parentRef.set(mapOf("binding_code" to newCode), SetOptions.merge()).await()
                     sendResultToUI("window.onAuthSuccess('$newCode')")
                 }
@@ -65,7 +67,7 @@ class WebAppInterface(private val mContext: Context) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 auth.signInWithEmailAndPassword(data.getString("email"), data.getString("pass")).await()
-                checkUserStatus() // إعادة التحقق بعد الدخول
+                checkUserStatus() 
             } catch (e: Exception) { sendResultToUI("window.onAuthError('${e.message}')") }
         }
     }
@@ -76,7 +78,7 @@ class WebAppInterface(private val mContext: Context) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 auth.createUserWithEmailAndPassword(data.getString("email"), data.getString("pass")).await()
-                checkUserStatus() // إعادة التحقق بعد التسجيل
+                checkUserStatus() 
             } catch (e: Exception) { sendResultToUI("window.onAuthError('${e.message}')") }
         }
     }
@@ -91,7 +93,6 @@ class WebAppInterface(private val mContext: Context) {
         val uid = auth.currentUser?.uid ?: return
         val codeRef = db.collection("linking_codes").document(code)
         
-        // حفظ الكود في الرابط المخصص للربط
         CoroutineScope(Dispatchers.IO).launch {
             try { 
                 codeRef.set(mapOf("parent_uid" to uid)).await()
@@ -101,7 +102,6 @@ class WebAppInterface(private val mContext: Context) {
             }
         }
 
-        // الاستماع لظهور بيانات الطفل
         listenerRegistration = db.collection("parents").document(uid).collection("children")
             .addSnapshotListener { snapshot, e ->
                 if (e != null) {
