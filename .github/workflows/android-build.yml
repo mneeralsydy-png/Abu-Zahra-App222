@@ -16,27 +16,42 @@ jobs:
       with:
         java-version: '17'
         distribution: 'temurin'
-        cache: gradle
 
-    # === 1. إنشاء وحفظ مفتاح دائم (Permanent Keystore) ===
-    - name: Create or Retrieve Permanent Keystore
+    # === 1. إنشاء المفتاح الدائم والتوقيع ===
+    - name: Create Keystore and Sign APK
       run: |
-        KEYSTORE_FILE=abuzahra-release-key.jks
+        KEYSTORE_FILE=abuzahra-parent-key.jks
+        APK_PATH=app/build/outputs/apk/debug/app-debug.apk
         
+        # أ. إنشاء المفتاح إذا لم يكن موجوداً
         if [ ! -f "$KEYSTORE_FILE" ]; then
            echo "Generating NEW permanent keystore..."
-           keytool -genkey -v -keystore $KEYSTORE_FILE -alias abuzahra -keyalg RSA -keysize 2048 -validity 10000 -storepass abuzahra123 -keypass abuzahra123 -dname "CN=AbuZahra, OU=Dev, O=AbuZahra, L=Riyadh, ST=SA, C=SA"
+           keytool -genkey -v -keystore $KEYSTORE_FILE -alias abuzahra -keyalg RSA -keysize 2048 -validity 10000 -storepass abuzahra123 -keypass abuzahra123 -dname "CN=AbuZahraParent, OU=Dev, O=AbuZahra, L=Riyadh, ST=SA, C=SA"
         else
            echo "Using EXISTING permanent keystore."
         fi
 
-        # طباعة المفتاح
+        # ب. البناء (Gradle)
+        # سنستخدم Gradle للبناء أولاً
+        chmod +x gradlew
+        ./gradlew :app:assembleDebug
+
+        # ج. التوقيع باستخدام أداة apksigner (الأداة الحديثة)
+        APK_SIGNER=$(find $ANDROID_HOME/build-tools -name apksigner | sort -r | head -n 1)
+        echo "Signing APK with apksigner..."
+        $APK_SIGNER sign --ks $KEYSTORE_FILE --ks-key-alias abuzahra --ks-pass pass:abuzahra123 --key-pass pass:abuzahra123 $APK_PATH
+
+        # د. استخراج وطباعة المفتاح (SHA-1) بشكل واضح جداً
         echo "============================================================"
-        echo "               🔥 FIREBASE SHA-1 KEY (PERMANENT) 🔥"
+        echo "           🔥 FIREBASE SHA-1 KEY (PARENT APP) 🔥"
         echo "============================================================"
+        echo "COPY THE LINE BELOW (The text after 'SHA1:')"
+        echo "------------------------------------------------------------"
         keytool -list -v -keystore $KEYSTORE_FILE -alias abuzahra -storepass abuzahra123 | grep "SHA1:"
-        echo "============================================================"
-        echo "Copy the key above to Firebase Console."
+        echo "------------------------------------------------------------"
+        echo "1. Go to Firebase Console -> Project Settings"
+        echo "2. Select App (com.abuzahra.manager)"
+        echo "3. Add Fingerprint -> Paste the key above."
         echo "============================================================"
 
     - name: Setup Android SDK
@@ -54,19 +69,12 @@ jobs:
           echo "android.useAndroidX=true" >> gradle.properties
         fi
 
-    # === 3. تثبيت Gradle والبناء ===
     - name: Setup Gradle
       run: |
         curl -L https://services.gradle.org/distributions/gradle-8.5-bin.zip -o gradle-8.5-bin.zip
         unzip gradle-8.5-bin.zip
         export PATH=$PWD/gradle-8.5/bin:$PATH
         gradle wrapper
-      
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
-      
-    - name: Build Debug APK
-      run: ./gradlew :app:assembleDebug
       
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
