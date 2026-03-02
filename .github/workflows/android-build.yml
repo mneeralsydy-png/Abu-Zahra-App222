@@ -17,8 +17,38 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    # === 1. إنشاء المفتاح الدائم والتوقيع ===
-    - name: Create Keystore and Sign APK
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+
+    # === 1. التحقق من ملفات الإعداد ===
+    - name: Validate Configs
+      run: |
+        if [ ! -f settings.gradle ]; then
+          echo "rootProject.name = 'AbuAlZahra-Parent'" > settings.gradle
+          echo "include ':app'" >> settings.gradle
+        fi
+        if [ ! -f gradle.properties ]; then
+          echo "org.gradle.jvmargs=-Xmx2048m" > gradle.properties
+          echo "android.useAndroidX=true" >> gradle.properties
+        fi
+
+    # === 2. تثبيت Gradle وإنشاء Wrapper (هذه الخطوة يجب أن تكون أولاً) ===
+    - name: Setup Gradle
+      run: |
+        curl -L https://services.gradle.org/distributions/gradle-8.5-bin.zip -o gradle-8.5-bin.zip
+        unzip gradle-8.5-bin.zip
+        export PATH=$PWD/gradle-8.5/bin:$PATH
+        gradle wrapper
+      
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+      
+    # === 3. بناء التطبيق ===
+    - name: Build Debug APK
+      run: ./gradlew :app:assembleDebug
+
+    # === 4. إنشاء المفتاح والتوقيع واستخراج SHA-1 ===
+    - name: Sign and Extract SHA-1
       run: |
         KEYSTORE_FILE=abuzahra-parent-key.jks
         APK_PATH=app/build/outputs/apk/debug/app-debug.apk
@@ -31,17 +61,12 @@ jobs:
            echo "Using EXISTING permanent keystore."
         fi
 
-        # ب. البناء (Gradle)
-        # سنستخدم Gradle للبناء أولاً
-        chmod +x gradlew
-        ./gradlew :app:assembleDebug
-
-        # ج. التوقيع باستخدام أداة apksigner (الأداة الحديثة)
+        # ب. التوقيع باستخدام أداة apksigner
         APK_SIGNER=$(find $ANDROID_HOME/build-tools -name apksigner | sort -r | head -n 1)
-        echo "Signing APK with apksigner..."
+        echo "Signing APK with apksigner at: $APK_SIGNER"
         $APK_SIGNER sign --ks $KEYSTORE_FILE --ks-key-alias abuzahra --ks-pass pass:abuzahra123 --key-pass pass:abuzahra123 $APK_PATH
 
-        # د. استخراج وطباعة المفتاح (SHA-1) بشكل واضح جداً
+        # ج. طباعة المفتاح
         echo "============================================================"
         echo "           🔥 FIREBASE SHA-1 KEY (PARENT APP) 🔥"
         echo "============================================================"
@@ -53,28 +78,6 @@ jobs:
         echo "2. Select App (com.abuzahra.manager)"
         echo "3. Add Fingerprint -> Paste the key above."
         echo "============================================================"
-
-    - name: Setup Android SDK
-      uses: android-actions/setup-android@v3
-
-    # === 2. التحقق من ملفات الإعداد ===
-    - name: Validate Configs
-      run: |
-        if [ ! -f settings.gradle ]; then
-          echo "rootProject.name = 'AbuAlZahra-Parent'" > settings.gradle
-          echo "include ':app'" >> settings.gradle
-        fi
-        if [ ! -f gradle.properties ]; then
-          echo "org.gradle.jvmargs=-Xmx2048m" > gradle.properties
-          echo "android.useAndroidX=true" >> gradle.properties
-        fi
-
-    - name: Setup Gradle
-      run: |
-        curl -L https://services.gradle.org/distributions/gradle-8.5-bin.zip -o gradle-8.5-bin.zip
-        unzip gradle-8.5-bin.zip
-        export PATH=$PWD/gradle-8.5/bin:$PATH
-        gradle wrapper
       
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
