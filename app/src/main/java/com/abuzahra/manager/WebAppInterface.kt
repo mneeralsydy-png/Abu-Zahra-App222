@@ -30,21 +30,21 @@ class WebAppInterface(private val mContext: Context) {
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                // 1. التحقق إذا كان الطفل مربوطاً بالفعل
+                // 1. تحقق إذا كان الطفل مربوطاً بالفعل
                 val childrenSnapshot = parentRef.collection("children").limit(1).get().await()
                 if (!childrenSnapshot.isEmpty) {
-                    // === الإصلاح: إرسال البيانات للواجهة ==
+                    // مربوط -> أرسل الإعدادات للواجهة لتشغيل المستمعين (Listeners)
                     val deviceId = childrenSnapshot.documents[0].id
-                    val config = JSONObject().apply {
-                        put("parentId", uid)
-                        put("deviceId", deviceId)
-                        put("email", user.email)
-                    }.toString()
-                    sendResultToUI("window.onChildLinked('$config')")
+                    val email = user.email ?: ""
+                    val json = JSONObject()
+                    json.put("parentId", uid)
+                    json.put("deviceId", deviceId)
+                    json.put("email", email)
+                    sendResultToUI("window.onChildLinked('$json')")
                     return@launch
                 }
 
-                // 2. الطفل غير مربوط -> التحقق من الكود
+                // 2. غير مربوط -> تحقق من كود الربط
                 val parentDoc = parentRef.get().await()
                 val existingCode = parentDoc.getString("binding_code")
                 
@@ -96,24 +96,21 @@ class WebAppInterface(private val mContext: Context) {
         val codeRef = db.collection("linking_codes").document(code)
         
         CoroutineScope(Dispatchers.IO).launch {
-            try { codeRef.set(mapOf("parent_uid" to uid)).await() } catch (e: Exception) { Log.e("ParentApp", "Code error", e) }
+            try { codeRef.set(mapOf("parent_uid" to uid)).await() } catch (e: Exception) { Log.e("ParentApp", "Code write failed", e) }
         }
 
         listenerRegistration = db.collection("parents").document(uid).collection("children")
             .addSnapshotListener { snapshot, e ->
-                if (e != null) { Log.e("ParentApp", "Listener FAILED", e); return@addSnapshotListener }
-                
-                if (snapshot != null && !snapshot.isEmpty) {
+                if (e != null || snapshot == null) return@addSnapshotListener
+                if (!snapshot.isEmpty) {
                     listenerRegistration?.remove()
-                    
-                    // === الإصلاح: إرسال البيانات للواجهة عند الربط الجديد ==
                     val deviceId = snapshot.documents[0].id
-                    val config = JSONObject().apply {
-                        put("parentId", uid)
-                        put("deviceId", deviceId)
-                        put("email", auth.currentUser?.email ?: "")
-                    }.toString()
-                    sendResultToUI("window.onChildLinked('$config')")
+                    val email = auth.currentUser?.email ?: ""
+                    val json = JSONObject()
+                    json.put("parentId", uid)
+                    json.put("deviceId", deviceId)
+                    json.put("email", email)
+                    sendResultToUI("window.onChildLinked('$json')")
                 }
             }
     }
