@@ -2,223 +2,31 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Tajawal', sans-serif; background-color: #0F172A; color: #E2E8F0; overflow-x: hidden; }
-        .screen { display: none; position: fixed; inset: 0; flex-direction: column; }
-        .screen.active { display: flex; }
-        .glass-panel { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .golden-text-title { font-family: 'Amiri', serif; background: linear-gradient(45deg, #bf953f, #fcf6ba, #b38728); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 100; display: none; align-items: center; justify-content: center; padding: 1rem; }
-        .modal-overlay.active { display: flex; }
-        .modal-content { background: #1E293B; border-radius: 1.5rem; width: 100%; max-width: 400px; max-height: 90vh; overflow-y: auto; border: 1px solid rgba(255,255,255,0.1); }
-        #map { height: 200px; width: 100%; border-radius: 1rem; z-index: 10; }
-        .pulse-live { animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
-        .btn-loading { pointer-events: none; opacity: 0.7; }
+        body { font-family: 'Tajawal', sans-serif; background-color: #0F172A; color: #fff; padding: 20px; }
+        .log-box { background: #1E293B; padding: 15px; border-radius: 10px; margin-top: 20px; font-family: monospace; font-size: 12px; white-space: pre-wrap; word-break: break-all; border: 1px solid #334155; }
+        .success { color: #4ADE80; }
+        .error { color: #F87171; }
+        .info { color: #60A5FA; }
     </style>
 </head>
-<body class="bg-slate-900">
+<body>
 
-    <!-- 1. Splash -->
-    <div id="screen-splash" class="screen active items-center justify-center bg-gradient-to-b from-slate-900 to-blue-900">
-        <h1 class="text-7xl golden-text-title">Abu Al-Zahra</h1>
-        <div class="mt-8 w-10 h-10 border-4 border-blue-500 border-dashed rounded-full animate-spin"></div>
-    </div>
-
-    <!-- 2. Login -->
-    <div id="screen-login" class="screen items-center justify-center bg-[#0F172A] p-6">
-        <div class="w-full max-w-sm text-center space-y-6">
-            <div class="mb-8">
-                <h2 class="text-5xl golden-text-title">مرحباً</h2>
-                <p class="text-blue-200 text-sm mt-2">سجل الدخول للمتابعة</p>
-            </div>
-            <div class="glass-panel rounded-3xl p-6 space-y-4 border border-slate-700">
-                <div class="text-right">
-                    <label class="text-blue-200 text-xs block mb-1">البريد الإلكتروني</label>
-                    <input id="txt-email" type="email" class="w-full bg-white/5 border border-white/10 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-blue-400 text-sm" placeholder="example@email.com">
-                </div>
-                <div class="text-right">
-                    <label class="text-blue-200 text-xs block mb-1">كلمة المرور</label>
-                    <input id="txt-pass" type="password" class="w-full bg-white/5 border border-white/10 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-blue-400 text-sm" placeholder="********">
-                </div>
-                <button id="btn-login" onclick="handleLogin()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-blue-500 transition">تسجيل الدخول</button>
-                <div class="flex items-center gap-2 text-blue-300 text-xs">
-                    <div class="flex-1 h-[1px] bg-white/20"></div><span>أو</span><div class="flex-1 h-[1px] bg-white/20"></div>
-                </div>
-                <button id="btn-google" onclick="handleGoogleLogin()" class="w-full bg-white text-gray-800 py-3 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 hover:bg-gray-100 transition">
-                    <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-                    <span>الدخول بجوجل</span>
-                </button>
-                <button id="btn-register" onclick="handleRegister()" class="w-full bg-green-600 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-green-500 transition mt-2">إنشاء حساب جديد</button>
-                <p id="auth-error" class="text-red-400 text-xs mt-2 hidden"></p>
-            </div>
-        </div>
-    </div>
-
-    <!-- 3. Binding -->
-    <div id="screen-binding" class="screen items-center justify-center bg-[#0F172A] p-6">
-        <div class="text-center w-full max-w-sm">
-            <div class="w-20 h-20 mx-auto bg-green-500/20 rounded-full flex items-center justify-center mb-4">
-                <svg class="w-10 h-10 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" /></svg>
-            </div>
-            <h2 class="text-2xl text-white font-bold mb-2">ربط جهاز جديد</h2>
-            <p class="text-gray-400 text-sm mb-6">أدخل هذا الكود في تطبيق الطفل</p>
-            <div class="bg-slate-800 border-2 border-dashed border-green-500 rounded-xl p-4 mb-6">
-                <p id="display-code" class="text-4xl font-mono text-white font-bold">000 000 000</p>
-            </div>
-            <p id="bind-status" class="text-xs text-gray-500">في انتظار اتصال جهاز الطفل...</p>
-        </div>
-    </div>
-
-    <!-- 4. Dashboard -->
-    <div id="screen-main" class="screen bg-[#0F172A]">
-        <header class="bg-slate-900/80 border-b border-slate-700 px-4 py-3 flex justify-between items-center shrink-0 z-20">
-            <div class="flex items-center gap-3">
-                <button onclick="openModal('modal-profile')" class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold shadow-lg"><span id="header-avatar">A</span></button>
-                <div>
-                    <h1 class="text-lg font-bold text-white">Abu <span class="golden-text-title">Al-Zahra</span></h1>
-                    <div class="flex items-center gap-2">
-                        <div id="status-dot" class="w-2 h-2 rounded-full bg-green-500 pulse-live"></div>
-                        <span id="status-text" class="text-[10px] text-green-400">متصل الآن</span>
-                    </div>
-                </div>
-            </div>
-            <div class="flex items-center gap-2 bg-slate-800 px-3 py-1 rounded-full border border-slate-700">
-                <svg class="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zm6-4a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zm6-3a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/></svg>
-                <span id="battery-level" class="text-xs text-white font-bold">--%</span>
-            </div>
-        </header>
-
-        <main class="p-4 space-y-6 pb-24 overflow-y-auto flex-1">
-            
-            <!-- Map -->
-            <section>
-                <h3 class="text-gray-400 text-xs font-bold mb-2 flex items-center gap-1">الموقع المباشر <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span></h3>
-                <div class="glass-panel rounded-2xl overflow-hidden shadow-xl">
-                    <div id="map" class="w-full"></div>
-                    <div class="p-3 bg-slate-800/50 flex justify-between items-center">
-                        <div>
-                            <p class="text-white text-sm font-bold" id="location-address">جاري التحديد...</p>
-                            <p class="text-gray-400 text-[10px]" id="location-time">آخر تحديث: --:--</p>
-                        </div>
-                        <button onclick="centerMap()" class="bg-blue-600 text-white text-xs px-3 py-1 rounded-lg">تحديث</button>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Live Tools -->
-            <section>
-                <h3 class="text-gray-400 text-xs font-bold mb-2">أدوات الوصول الحي</h3>
-                <div class="grid grid-cols-3 gap-3">
-                    <button onclick="startStream('screen')" class="bg-slate-800 rounded-2xl p-4 flex flex-col items-center hover:bg-slate-700 transition border border-slate-700">
-                        <div class="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center mb-2"><svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg></div>
-                        <span class="text-[11px] font-bold text-gray-200">بث الشاشة</span>
-                    </button>
-                    <button onclick="startStream('camera')" class="bg-slate-800 rounded-2xl p-4 flex flex-col items-center hover:bg-slate-700 transition border border-slate-700">
-                        <div class="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center mb-2"><svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg></div>
-                        <span class="text-[11px] font-bold text-gray-200">الكاميرا</span>
-                    </button>
-                    <button onclick="startStream('microphone')" class="bg-slate-800 rounded-2xl p-4 flex flex-col items-center hover:bg-slate-700 transition border border-slate-700">
-                        <div class="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center mb-2"><svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg></div>
-                        <span class="text-[11px] font-bold text-gray-200">الاستماع</span>
-                    </button>
-                </div>
-            </section>
-
-            <!-- Messaging -->
-            <section>
-                <h3 class="text-gray-400 text-xs font-bold mb-2">المراسلة والسجلات</h3>
-                <div class="space-y-2">
-                    <button onclick="openLogs('social_logs')" class="w-full glass-panel rounded-xl p-4 flex items-center gap-4 hover:bg-slate-700/50">
-                        <div class="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center text-white font-bold">W</div>
-                        <div class="flex-1 text-right"><h4 class="text-white font-bold text-sm">واتساب / ماسنجر</h4><p class="text-gray-400 text-[10px]" id="count-social">0 رسالة جديدة</p></div>
-                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
-                    </button>
-                    <button onclick="openLogs('notifications')" class="w-full glass-panel rounded-xl p-4 flex items-center gap-4 hover:bg-slate-700/50">
-                        <div class="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center text-white font-bold">N</div>
-                        <div class="flex-1 text-right"><h4 class="text-white font-bold text-sm">الإشعارات</h4><p class="text-gray-400 text-[10px]" id="count-notifications">0 إشعار</p></div>
-                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
-                    </button>
-                    <button onclick="openLogs('sms')" class="w-full glass-panel rounded-xl p-4 flex items-center gap-4 hover:bg-slate-700/50">
-                        <div class="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold">S</div>
-                        <div class="flex-1 text-right"><h4 class="text-white font-bold text-sm">الرسائل النصية</h4><p class="text-gray-400 text-[10px]" id="count-sms">0 رسالة</p></div>
-                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
-                    </button>
-                </div>
-            </section>
-
-            <!-- Logs & Mgmt -->
-            <section>
-                <h3 class="text-gray-400 text-xs font-bold mb-2">السجل والإدارة</h3>
-                <div class="grid grid-cols-2 gap-3">
-                    <button onclick="openLogs('calls')" class="bg-slate-800 rounded-xl p-4 flex flex-col items-center justify-center h-24 hover:bg-slate-700 border border-slate-700">
-                        <svg class="w-6 h-6 text-blue-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
-                        <span class="text-[10px] font-bold text-gray-200">سجل المكالمات</span>
-                    </button>
-                    <button onclick="openAppManager()" class="bg-slate-800 rounded-xl p-4 flex flex-col items-center justify-center h-24 hover:bg-slate-700 border border-slate-700">
-                        <svg class="w-6 h-6 text-green-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
-                        <span class="text-[10px] font-bold text-gray-200">إدارة التطبيقات</span>
-                    </button>
-                </div>
-            </section>
-        </main>
-    </div>
-
-    <!-- Modals -->
-    <div id="modal-profile" class="modal-overlay" onclick="closeModal('modal-profile')">
-        <div class="modal-content p-6 text-center" onclick="event.stopPropagation()">
-            <div class="w-20 h-20 bg-blue-600 rounded-full mx-auto mb-4 flex items-center justify-center text-white text-3xl font-bold">A</div>
-            <h3 class="text-lg font-bold text-white mb-1" id="profile-device-name">جهاز الطفل</h3>
-            <p class="text-gray-400 text-sm mb-6" id="profile-email">user@example.com</p>
-            <button onclick="logout()" class="w-full bg-red-600 text-white py-3 rounded-xl font-bold">تسجيل الخروج</button>
-            <button onclick="closeModal('modal-profile')" class="w-full mt-2 text-gray-400 text-sm py-2">إغلاق</button>
-        </div>
-    </div>
-
-    <div id="modal-stream" class="modal-overlay" onclick="closeStream()">
-        <div class="modal-content bg-black p-0 relative" onclick="event.stopPropagation()">
-            <div class="absolute top-0 left-0 right-0 bg-black/50 p-4 flex justify-between items-center z-10">
-                <div class="flex items-center gap-2"><div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div><span class="text-white text-xs font-bold">LIVE</span></div>
-                <button onclick="closeStream()" class="text-white font-bold">✕</button>
-            </div>
-            <div class="w-full aspect-[3/4] bg-slate-900 flex items-center justify-center">
-                <div id="stream-placeholder" class="text-center">
-                    <p class="text-gray-500 text-sm" id="stream-status-text">ميزة البث تتطلب خادم وسائط (WebRTC).</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-logs" class="modal-overlay" onclick="closeModal('modal-logs')">
-        <div class="modal-content h-5/6 flex flex-col" onclick="event.stopPropagation()">
-            <div class="p-4 border-b border-slate-700 flex justify-between items-center">
-                <h3 id="logs-title" class="font-bold text-white">السجلات</h3>
-                <button onclick="closeModal('modal-logs')" class="text-gray-400 text-xl">✕</button>
-            </div>
-            <div id="logs-list" class="flex-1 overflow-y-auto p-4 space-y-3">
-                <p class="text-center text-gray-500 text-sm">جاري التحميل...</p>
-            </div>
-        </div>
-    </div>
+    <h1 class="text-2xl font-bold mb-4">🛠️ وضع التشخيص (Debug Mode)</h1>
     
-    <div id="modal-apps" class="modal-overlay" onclick="closeModal('modal-apps')">
-        <div class="modal-content h-5/6 flex flex-col" onclick="event.stopPropagation()">
-            <div class="p-4 border-b border-slate-700 flex justify-between items-center">
-                <h3 class="font-bold text-white">التطبيقات المثبتة</h3>
-                <button onclick="closeModal('modal-apps')" class="text-gray-400 text-xl">✕</button>
-            </div>
-            <div id="apps-list" class="flex-1 overflow-y-auto p-4 space-y-2">
-                <p class="text-center text-gray-500 text-sm">البيانات غير متوفرة</p>
-            </div>
-        </div>
+    <div id="status-card" class="bg-slate-800 p-4 rounded-xl mb-4">
+        <p>حالة المصادقة: <span id="auth-status" class="font-bold">جاري الفحص...</span></p>
+        <p>Parent ID: <span id="pid-display" class="text-gray-400">-</span></p>
+        <p>Device ID: <span id="did-display" class="text-gray-400">-</span></p>
     </div>
 
-    <!-- JavaScript Logic -->
+    <button onclick="startFullDiagnosis()" class="w-full bg-blue-600 py-3 rounded-xl font-bold mb-4">تشغيل الفحص الشامل</button>
+    
+    <div class="log-box" id="log-container">في انتظار بدء الفحص...</div>
+
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script>
@@ -234,165 +42,106 @@
         const db = firebase.firestore();
 
         let currentConfig = { parentId: null, deviceId: null };
-        let map, marker;
 
-        document.addEventListener('DOMContentLoaded', () => {
-            initMap();
-            setTimeout(() => { if(document.getElementById('screen-splash').classList.contains('active')) showScreen('screen-login'); }, 4000);
-            if(typeof AndroidNative !== 'undefined') AndroidNative.checkUserStatus();
-        });
-
-        function showScreen(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
-        function openModal(id){ document.getElementById(id).classList.add('active'); }
-        function closeModal(id){ document.getElementById(id).classList.remove('active'); }
-
-        function showError(msg){ document.getElementById('auth-error').innerText = msg; document.getElementById('auth-error').classList.remove('hidden'); resetButtons(); }
-        function hideError(){ document.getElementById('auth-error').classList.add('hidden'); }
-        function setLoading(isLoading) {
-            const btns = ['btn-login', 'btn-register', 'btn-google'];
-            btns.forEach(id => {
-                const btn = document.getElementById(id);
-                if(isLoading){ btn.classList.add('btn-loading'); } else { btn.classList.remove('btn-loading'); }
-            });
-        }
-        function resetButtons() { setLoading(false); }
-
-        function handleLogin(){ 
-            const email = document.getElementById('txt-email').value.trim();
-            const pass = document.getElementById('txt-pass').value;
-            if(!email || !pass) { showError("يرجى إدخال البريد وكلمة المرور"); return; }
-            hideError(); setLoading(true);
-            callNative('loginUser', JSON.stringify({email: email, pass: pass})); 
+        function log(msg, type = 'info') {
+            const container = document.getElementById('log-container');
+            const time = new Date().toLocaleTimeString();
+            let colorClass = 'text-gray-300';
+            if(type === 'error') colorClass = 'error';
+            if(type === 'success') colorClass = 'success';
+            container.innerHTML += `<span class="${colorClass}">[${time}] ${msg}</span>\n`;
+            container.scrollTop = container.scrollHeight;
+            console.log(msg);
         }
 
-        function handleRegister(){ 
-            const email = document.getElementById('txt-email').value.trim();
-            const pass = document.getElementById('txt-pass').value;
-            if(!email || !pass) { showError("يرجى إدخال البريد وكلمة المرور"); return; }
-            hideError(); setLoading(true);
-            callNative('registerUser', JSON.stringify({email: email, pass: pass})); 
-        }
-        
-        function handleGoogleLogin(){ hideError(); setLoading(true); callNative('loginWithGoogle'); }
+        function updateStatus(id, val) { document.getElementById(id).innerText = val || 'غير موجود'; if(val) document.getElementById(id).classList.remove('text-gray-400'); }
 
-        // Callbacks
-        window.onAuthSuccess = function(code){ 
-            resetButtons();
-            showScreen('screen-binding'); 
-            if(code && code.length === 9) {
-                document.getElementById('display-code').innerText = code.substring(0,3) + " " + code.substring(3,6) + " " + code.substring(6);
-            } else { document.getElementById('display-code').innerText = code; }
-            callNative('startListeningForChild', code); 
-        };
-
-        window.onAuthError = function(msg){ 
-            resetButtons();
-            if(msg.includes('10') || msg.includes('ApiException')) { showError('خطأ في شهادة التطبيق (SHA-1).'); } else { showError(msg); }
-        };
-
-        // === THE FIX: Initialize Config and Start Listeners ===
+        // This function is called by Kotlin
         window.onChildLinked = function(configJson){
-            resetButtons();
+            log('تم استقبال بيانات الربط من Kotlin.', 'success');
             try {
                 currentConfig = JSON.parse(configJson);
-                document.getElementById('profile-email').innerText = currentConfig.email || '';
-                showScreen('screen-main');
-                startDashboardListeners(); // Start listening for data
-            } catch(e) { console.error("Config Parse Error", e); }
+                log(`Parent ID: ${currentConfig.parentId}`);
+                log(`Device ID: ${currentConfig.deviceId}`);
+                updateStatus('pid-display', currentConfig.parentId);
+                updateStatus('did-display', currentConfig.deviceId);
+                
+                // Start listening immediately
+                startListening();
+            } catch(e) {
+                log('خطأ في تحليل JSON: ' + e.message, 'error');
+            }
         };
+        
+        window.showLoginScreen = function(){ log('Kotlin يقول: يجب تسجيل الدخول.', 'error'); document.getElementById('auth-status').innerText = "غير مسجل"; }
+        window.onAuthSuccess = function(code){ log('Kotlin يقول: تم تسجيل الدخول. الكود: ' + code, 'success'); }
+        window.onAuthError = function(msg){ log('Kotlin يقول: خطأ: ' + msg, 'error'); }
 
-        window.showLoginScreen = function(){ resetButtons(); showScreen('screen-login'); };
+        function startFullDiagnosis() {
+            document.getElementById('log-container').innerHTML = ''; // Clear log
+            log('بدء الفحص الشامل...');
+            
+            // 1. Check Native Bridge
+            if(typeof AndroidNative === 'undefined') {
+                log('خطأ حرج: الجسر (AndroidNative) غير موجود! الكود البرمجي (Kotlin) غير متصل بالـ HTML.', 'error');
+                return;
+            } else {
+                log('الجسر (AndroidNative) موجود.', 'success');
+            }
 
-        // === REALTIME LOGIC ===
-        function startDashboardListeners() {
-            if(!currentConfig.parentId) return;
+            // 2. Ask Kotlin for status
+            log('طلب حالة المستخدم من Kotlin...');
+            AndroidNative.checkUserStatus();
+        }
+
+        function startListening() {
+            if(!currentConfig.parentId || !currentConfig.deviceId) {
+                log('لا يمكن البدء: البيانات ناقصة.', 'error');
+                return;
+            }
+
+            log('جاري الاتصال بـ Firestore للمستمع الحي...');
             const ref = db.collection('parents').document(currentConfig.parentId)
                            .collection('children').document(currentConfig.deviceId);
 
-            // 1. Listen for Battery and Location
+            // Listen for Main Data (Battery/Location)
             ref.onSnapshot(doc => {
                 if(doc.exists){
+                    log('✅ تم العثور على المستند الرئيسي!', 'success');
                     const data = doc.data();
-                    updateUI(data);
+                    log(`   البطارية: ${data.battery_level}`);
+                    log(`   الموقع: ${JSON.stringify(data.location)}`);
+                    log(`   Online: ${data.is_online}`);
+                } else {
+                    log('❌ المستند غير موجود! تطبيق الطفل لم يكتب البيانات الأولية.', 'error');
+                }
+            }, error => {
+                log('❌ خطأ في قراءة البيانات: ' + error.message, 'error');
+                if(error.message.includes("PERMISSION_DENIED")) {
+                   log('🔥 السبب: قواعد الأمان (Rules) تمنع القراءة. تأكد من أنك نشرت القواعد الجديدة.', 'error');
                 }
             });
             
-            // 2. Listen for Log Counts (Optional but good for realtime counters)
-            // Note: Firestore counts require aggregation, so we will update counts manually when opening logs for simplicity
+            // Check Logs
+            checkCollection('social_logs', 'واتساب');
+            checkCollection('notifications', 'إشعارات');
         }
 
-        function updateUI(data) {
-            // Update Battery
-            if(data.battery_level !== undefined) {
-                document.getElementById('battery-level').innerText = data.battery_level + '%';
-            }
-            // Update Status
-            if(data.is_online !== undefined) {
-                 document.getElementById('status-text').innerText = data.is_online ? 'متصل الآن' : 'غير متصل';
-                 document.getElementById('status-dot').className = data.is_online ? 'w-2 h-2 rounded-full bg-green-500 pulse-live' : 'w-2 h-2 rounded-full bg-red-500';
-            }
-            // Update Map
-            if(data.location) {
-                updateMap(data.location.lat, data.location.lng);
-            }
-            // Update Device Name
-            if(data.app_name) document.getElementById('profile-device-name').innerText = data.app_name;
-        }
-
-        function initMap() {
-            map = L.map('map').setView([24.7136, 46.6753], 13);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '' }).addTo(map);
-            marker = L.marker([24.7136, 46.6753]).addTo(map);
-        }
-        function updateMap(lat, lng){
-            if(lat && lng){
-                const newLatLng = [lat, lng];
-                marker.setLatLng(newLatLng);
-                map.setView(newLatLng, 15);
-                document.getElementById('location-address').innerText = "تم تحديث الموقع";
-                document.getElementById('location-time').innerText = new Date().toLocaleTimeString('ar');
-            }
-        }
-        function centerMap(){ if(marker) map.setView(marker.getLatLng(), 16); }
-
-        // === BUTTON ACTIONS (Fetch Data) ===
-        function startStream(type){ openModal('modal-stream'); }
-        function closeStream(){ closeModal('modal-stream'); }
-
-        function openLogs(collection){
-            openModal('modal-logs');
-            const list = document.getElementById('logs-list');
-            list.innerHTML = '<p class="text-center text-gray-400">جاري التحميل...</p>';
-            
+        function checkCollection(name, label) {
             db.collection('parents').document(currentConfig.parentId)
               .collection('children').document(currentConfig.deviceId)
-              .collection(collection).orderBy('timestamp', 'desc').limit(50).get().then(snap => {
-                  if(snap.empty){ list.innerHTML = '<p class="text-center text-gray-500">لا توجد بيانات</p>'; return; }
-                  list.innerHTML = '';
-                  snap.forEach(doc => { list.appendChild(createLogItem(doc.data())); });
-              }).catch(err => {
-                  list.innerHTML = '<p class="text-center text-red-500">خطأ في تحميل البيانات</p>';
-                  console.error(err);
-              });
+              .collection(name).limit(1).get().then(snap => {
+                  if(snap.empty) log(`⚠️ ${label}: لا توجد بيانات.`);
+                  else log(`✅ ${label}: يوجد ${snap.size} سجل.`, 'success');
+              }).catch(err => log(`❌ ${label}: خطأ ${err.message}`, 'error'));
         }
 
-        function createLogItem(d){
-            const div = document.createElement('div');
-            div.className = "bg-slate-700 p-3 rounded-lg";
-            let html = '';
-            html += `<div class="flex justify-between mb-1"><span class="text-white font-bold">${d.title || d.phone || d.app_name || 'Unknown'}</span><span class="text-gray-400 text-[10px]">${d.timestamp ? new Date(d.timestamp.seconds * 1000).toLocaleString('ar') : ''}</span></div>`;
-            if(d.body || d.message || d.text) html += `<p class="text-gray-300 text-sm">${d.body || d.message || d.text}</p>`;
-            div.innerHTML = html;
-            return div;
-        }
-
-        function openAppManager(){
-            openModal('modal-apps');
-            // Note: App list needs to be uploaded by child app first
-        }
-
-        function callNative(fn, arg){ if(typeof AndroidNative !== 'undefined'){ arg ? AndroidNative[fn](arg) : AndroidNative[fn](); } }
-        function logout(){ callNative('logout'); showScreen('screen-login'); }
+        // Safety timeout
+        setTimeout(() => {
+            if(document.getElementById('pid-display').innerText === '-') {
+               log('انتهى الوقت بدون استجابة من Kotlin. تأكد من الضغط على زر "تشغيل الفحص".', 'error');
+            }
+        }, 5000);
 
     </script>
 </body>
