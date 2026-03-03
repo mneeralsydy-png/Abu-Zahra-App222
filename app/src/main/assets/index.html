@@ -21,10 +21,10 @@
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
         .btn-loading { pointer-events: none; opacity: 0.7; }
         
-        /* Diagnostic styles */
+        /* Diagnostic Bar Style */
         .diagnostic-bar {
             position: fixed; bottom: 0; left: 0; right: 0;
-            background: rgba(0, 0, 0, 0.9); border-top: 1px solid #334155;
+            background: rgba(0, 0, 0, 0.95); border-top: 1px solid #334155;
             padding: 8px; font-size: 10px; color: #94a3b8;
             height: 80px; overflow-y: auto; z-index: 200;
             font-family: monospace; white-space: pre-wrap;
@@ -93,7 +93,7 @@
         </div>
     </div>
 
-    <!-- === 4. Dashboard === -->
+    <!-- === 4. Dashboard (Complete) === -->
     <div id="screen-main" class="screen bg-[#0F172A]">
         <header class="bg-slate-900/80 border-b border-slate-700 px-4 py-3 flex justify-between items-center shrink-0 z-20">
             <div class="flex items-center gap-3">
@@ -129,6 +129,25 @@
                 </div>
             </section>
 
+            <!-- Live Access Tools -->
+            <section>
+                <h3 class="text-gray-400 text-xs font-bold mb-2">أدوات الوصول الحي</h3>
+                <div class="grid grid-cols-3 gap-3">
+                    <button onclick="startStream('screen')" class="bg-slate-800 rounded-2xl p-4 flex flex-col items-center hover:bg-slate-700 transition border border-slate-700">
+                        <div class="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center mb-2"><svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg></div>
+                        <span class="text-[11px] font-bold text-gray-200">بث الشاشة</span>
+                    </button>
+                    <button onclick="startStream('camera')" class="bg-slate-800 rounded-2xl p-4 flex flex-col items-center hover:bg-slate-700 transition border border-slate-700">
+                        <div class="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center mb-2"><svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg></div>
+                        <span class="text-[11px] font-bold text-gray-200">الكاميرا</span>
+                    </button>
+                    <button onclick="startStream('microphone')" class="bg-slate-800 rounded-2xl p-4 flex flex-col items-center hover:bg-slate-700 transition border border-slate-700">
+                        <div class="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center mb-2"><svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg></div>
+                        <span class="text-[11px] font-bold text-gray-200">الاستماع</span>
+                    </button>
+                </div>
+            </section>
+
             <!-- Messaging & Logs -->
             <section>
                 <h3 class="text-gray-400 text-xs font-bold mb-2">المراسلة والسجلات</h3>
@@ -147,6 +166,21 @@
                         <div class="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold">S</div>
                         <div class="flex-1 text-right"><h4 class="text-white font-bold text-sm">الرسائل النصية</h4><p class="text-gray-400 text-[10px]" id="count-sms">0 رسالة</p></div>
                         <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Management -->
+            <section>
+                <h3 class="text-gray-400 text-xs font-bold mb-2">السجل والإدارة</h3>
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="openLogs('calls')" class="bg-slate-800 rounded-xl p-4 flex flex-col items-center justify-center h-24 hover:bg-slate-700 border border-slate-700">
+                        <svg class="w-6 h-6 text-blue-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
+                        <span class="text-[10px] font-bold text-gray-200">سجل المكالمات</span>
+                    </button>
+                    <button onclick="openAppManager()" class="bg-slate-800 rounded-xl p-4 flex flex-col items-center justify-center h-24 hover:bg-slate-700 border border-slate-700">
+                        <svg class="w-6 h-6 text-green-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+                        <span class="text-[10px] font-bold text-gray-200">إدارة التطبيقات</span>
                     </button>
                 </div>
             </section>
@@ -175,6 +209,18 @@
             </div>
         </div>
     </div>
+    
+    <div id="modal-apps" class="modal-overlay" onclick="closeModal('modal-apps')">
+        <div class="modal-content h-5/6 flex flex-col" onclick="event.stopPropagation()">
+            <div class="p-4 border-b border-slate-700 flex justify-between items-center">
+                <h3 class="font-bold text-white">التطبيقات المثبتة</h3>
+                <button onclick="closeModal('modal-apps')" class="text-gray-400 text-xl">✕</button>
+            </div>
+            <div id="apps-list" class="flex-1 overflow-y-auto p-4 space-y-2">
+                <p class="text-center text-gray-500 text-sm">البيانات غير متوفرة</p>
+            </div>
+        </div>
+    </div>
 
     <!-- Diagnostic Bar -->
     <div id="diag-box" class="diagnostic-bar">
@@ -199,7 +245,7 @@
         let currentConfig = { parentId: null, deviceId: null };
         let map, marker;
 
-        // === Diagnostic Logger ===
+        // === Logger ===
         function log(msg, type = 'info') {
             const box = document.getElementById('diag-box');
             const time = new Date().toLocaleTimeString();
@@ -293,13 +339,13 @@
             showScreen('screen-login'); 
         };
 
-        // === Dashboard Logic (FIXED: Used .doc() instead of .document()) ===
+        // === Dashboard Logic (FIXED) ===
         function startDashboardListeners() {
             if(!currentConfig.parentId) { log('Error: Parent ID is null!', 'error'); return; }
             
             log('Connecting to Firestore...', 'info');
             
-            // Correction applied here: .doc() instead of .document()
+            // CORRECTED: Using .doc() instead of .document()
             const ref = db.collection('parents').doc(currentConfig.parentId)
                            .collection('children').doc(currentConfig.deviceId);
 
@@ -347,12 +393,15 @@
         }
         function centerMap(){ if(marker) map.setView(marker.getLatLng(), 16); }
 
+        function startStream(type){ openModal('modal-stream'); log(`Starting stream: ${type}`, 'info'); }
+        function closeStream(){ closeModal('modal-stream'); }
+
         function openLogs(collection){
             openModal('modal-logs');
             const list = document.getElementById('logs-list');
             list.innerHTML = '<p class="text-center text-gray-400">جاري التحميل...</p>';
             
-            // Correction applied here: .doc() instead of .document()
+            // CORRECTED: Using .doc() instead of .document()
             db.collection('parents').doc(currentConfig.parentId)
               .collection('children').doc(currentConfig.deviceId)
               .collection(collection).orderBy('timestamp', 'desc').limit(50).get().then(snap => {
@@ -374,6 +423,11 @@
             if(d.body || d.message || d.text) html += `<p class="text-gray-300 text-sm">${d.body || d.message || d.text}</p>`;
             div.innerHTML = html;
             return div;
+        }
+
+        function openAppManager(){
+            openModal('modal-apps');
+            log('Opening App Manager...', 'info');
         }
 
         function callNative(fn, arg){ if(typeof AndroidNative !== 'undefined'){ arg ? AndroidNative[fn](arg) : AndroidNative[fn](); } }
