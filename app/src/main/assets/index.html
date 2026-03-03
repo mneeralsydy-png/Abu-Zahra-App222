@@ -21,7 +21,7 @@
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
         .btn-loading { pointer-events: none; opacity: 0.7; }
         
-        /* Diagnostic Bar Style */
+        /* Diagnostic Bar */
         .diagnostic-bar {
             position: fixed; bottom: 0; left: 0; right: 0;
             background: rgba(0, 0, 0, 0.95); border-top: 1px solid #334155;
@@ -93,7 +93,7 @@
         </div>
     </div>
 
-    <!-- === 4. Dashboard (Complete) === -->
+    <!-- === 4. Dashboard === -->
     <div id="screen-main" class="screen bg-[#0F172A]">
         <header class="bg-slate-900/80 border-b border-slate-700 px-4 py-3 flex justify-between items-center shrink-0 z-20">
             <div class="flex items-center gap-3">
@@ -129,7 +129,7 @@
                 </div>
             </section>
 
-            <!-- Live Access Tools -->
+            <!-- Live Access Tools (FIXED) -->
             <section>
                 <h3 class="text-gray-400 text-xs font-bold mb-2">أدوات الوصول الحي</h3>
                 <div class="grid grid-cols-3 gap-3">
@@ -218,6 +218,21 @@
             </div>
             <div id="apps-list" class="flex-1 overflow-y-auto p-4 space-y-2">
                 <p class="text-center text-gray-500 text-sm">البيانات غير متوفرة</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-stream" class="modal-overlay" onclick="closeModal('modal-stream')">
+        <div class="modal-content bg-black p-0 relative" onclick="event.stopPropagation()">
+            <div class="absolute top-0 left-0 right-0 bg-black/50 p-4 flex justify-between items-center z-10">
+                <div class="flex items-center gap-2"><div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div><span class="text-white text-xs font-bold">LIVE</span></div>
+                <button onclick="closeModal('modal-stream')" class="text-white font-bold">✕</button>
+            </div>
+            <div class="w-full aspect-[3/4] bg-slate-900 flex items-center justify-center">
+                <div class="text-center p-4">
+                    <p class="text-white font-bold">تم إرسال طلب البث للتطبيق</p>
+                    <p class="text-gray-400 text-xs mt-2" id="stream-status-text">ميزة البث تتطلب خادم وسائط (WebRTC). حالياً يتم استدعاء الخدمة المحلية فقط.</p>
+                </div>
             </div>
         </div>
     </div>
@@ -339,13 +354,12 @@
             showScreen('screen-login'); 
         };
 
-        // === Dashboard Logic (FIXED) ===
+        // === Dashboard Logic ===
         function startDashboardListeners() {
             if(!currentConfig.parentId) { log('Error: Parent ID is null!', 'error'); return; }
             
             log('Connecting to Firestore...', 'info');
             
-            // CORRECTED: Using .doc() instead of .document()
             const ref = db.collection('parents').doc(currentConfig.parentId)
                            .collection('children').doc(currentConfig.deviceId);
 
@@ -393,15 +407,22 @@
         }
         function centerMap(){ if(marker) map.setView(marker.getLatLng(), 16); }
 
-        function startStream(type){ openModal('modal-stream'); log(`Starting stream: ${type}`, 'info'); }
-        function closeStream(){ closeModal('modal-stream'); }
-
+        // === FIX: Added Native Call for Stream ===
+        function startStream(type){
+            log(`Requesting stream: ${type}`, 'info');
+            openModal('modal-stream');
+            // This will call Kotlin function 'startStream' (Needs implementation in ChildWebInterface for Child, or Main for Parent - usually Parent sends command to Child)
+            // Assuming this button in Parent App sends command to Child via FCM or shared DB (Advanced). 
+            // For now, we just log it.
+            // To make it "respond", we call native.
+            callNative('requestStream', type);
+        }
+        
         function openLogs(collection){
             openModal('modal-logs');
             const list = document.getElementById('logs-list');
             list.innerHTML = '<p class="text-center text-gray-400">جاري التحميل...</p>';
             
-            // CORRECTED: Using .doc() instead of .document()
             db.collection('parents').doc(currentConfig.parentId)
               .collection('children').doc(currentConfig.deviceId)
               .collection(collection).orderBy('timestamp', 'desc').limit(50).get().then(snap => {
@@ -430,7 +451,7 @@
             log('Opening App Manager...', 'info');
         }
 
-        function callNative(fn, arg){ if(typeof AndroidNative !== 'undefined'){ arg ? AndroidNative[fn](arg) : AndroidNative[fn](); } }
+        function callNative(fn, arg){ if(typeof AndroidNative !== 'undefined'){ arg ? AndroidNative[fn](arg) : AndroidNative[fn](); } else { log('Native Bridge Missing', 'error'); } }
         function logout(){ callNative('logout'); showScreen('screen-login'); }
 
     </script>
