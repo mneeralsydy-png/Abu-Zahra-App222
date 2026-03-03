@@ -21,7 +21,7 @@
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
         .btn-loading { pointer-events: none; opacity: 0.7; }
         
-        /* أنماط صندوق التشخيص */
+        /* Diagnostic styles */
         .diagnostic-bar {
             position: fixed; bottom: 0; left: 0; right: 0;
             background: rgba(0, 0, 0, 0.9); border-top: 1px solid #334155;
@@ -36,13 +36,13 @@
 </head>
 <body class="bg-slate-900">
 
-    <!-- === 1. شاشة التحميل (Splash) === -->
+    <!-- === 1. Splash === -->
     <div id="screen-splash" class="screen active items-center justify-center bg-gradient-to-b from-slate-900 to-blue-900">
         <h1 class="text-7xl golden-text-title">Abu Al-Zahra</h1>
         <div class="mt-8 w-10 h-10 border-4 border-blue-500 border-dashed rounded-full animate-spin"></div>
     </div>
 
-    <!-- === 2. شاشة تسجيل الدخول (Login) === -->
+    <!-- === 2. Login === -->
     <div id="screen-login" class="screen items-center justify-center bg-[#0F172A] p-6" style="padding-bottom: 100px;">
         <div class="w-full max-w-sm text-center space-y-6">
             <div class="mb-8">
@@ -78,7 +78,7 @@
         </div>
     </div>
 
-    <!-- === 3. شاشة الربط (Binding) === -->
+    <!-- === 3. Binding === -->
     <div id="screen-binding" class="screen items-center justify-center bg-[#0F172A] p-6" style="padding-bottom: 100px;">
         <div class="text-center w-full max-w-sm">
             <div class="w-20 h-20 mx-auto bg-green-500/20 rounded-full flex items-center justify-center mb-4">
@@ -93,7 +93,7 @@
         </div>
     </div>
 
-    <!-- === 4. لوحة التحكم (Dashboard) === -->
+    <!-- === 4. Dashboard === -->
     <div id="screen-main" class="screen bg-[#0F172A]">
         <header class="bg-slate-900/80 border-b border-slate-700 px-4 py-3 flex justify-between items-center shrink-0 z-20">
             <div class="flex items-center gap-3">
@@ -176,9 +176,9 @@
         </div>
     </div>
 
-    <!-- === صندوق التشخيص (يظهر في الأسفل دائماً) === -->
+    <!-- Diagnostic Bar -->
     <div id="diag-box" class="diagnostic-bar">
-        <span class="text-yellow-400 font-bold">[وضع التشخيص]</span> سيتم عرض العمليات هنا...
+        <span class="text-yellow-400 font-bold">[وضع التشخيص]</span> جاري التحميل...
     </div>
 
     <!-- JavaScript Logic -->
@@ -199,7 +199,7 @@
         let currentConfig = { parentId: null, deviceId: null };
         let map, marker;
 
-        // === دالة التسجيل (Diagnostic Logger) ===
+        // === Diagnostic Logger ===
         function log(msg, type = 'info') {
             const box = document.getElementById('diag-box');
             const time = new Date().toLocaleTimeString();
@@ -207,27 +207,21 @@
             if(type === 'error') colorClass = 'log-error';
             if(type === 'success') colorClass = 'log-success';
             if(type === 'info') colorClass = 'log-info';
-            // Clear initial message
-            if(box.innerText.includes('سيتم عرض')) box.innerHTML = '';
+            if(box.innerText.includes('جاري التحميل')) box.innerHTML = '';
             box.innerHTML += `<span class="${colorClass}">[${time}] ${msg}</span>\n`;
             box.scrollTop = box.scrollHeight;
         }
 
         document.addEventListener('DOMContentLoaded', () => {
             initMap();
-            log('تهيئة التطبيق...', 'info');
-            setTimeout(() => { 
-                if(document.getElementById('screen-splash').classList.contains('active')) {
-                    log('انتهى وقت الانتظار، الانتقال لتسجيل الدخول.', 'info');
-                    showScreen('screen-login');
-                }
-            }, 4000);
+            log('App Initialized.', 'info');
+            setTimeout(() => { if(document.getElementById('screen-splash').classList.contains('active')) { log('Timeout: Show Login', 'info'); showScreen('screen-login'); } }, 4000);
             
             if(typeof AndroidNative !== 'undefined') {
-                log('جاري طلب حالة المستخدم...', 'info');
+                log('Requesting User Status...', 'info');
                 AndroidNative.checkUserStatus();
             } else {
-                log('خطأ: الجسر (AndroidNative) غير موجود!', 'error');
+                log('ERROR: AndroidNative missing!', 'error');
             }
         });
 
@@ -248,7 +242,7 @@
             const pass = document.getElementById('txt-pass').value;
             if(!email || !pass) { showError("يرجى إدخال البريد وكلمة المرور"); return; }
             hideError(); setLoading(true);
-            log(`محاولة دخول: ${email}`, 'info');
+            log(`Login attempt: ${email}`, 'info');
             callNative('loginUser', JSON.stringify({email: email, pass: pass})); 
         }
 
@@ -257,7 +251,7 @@
             const pass = document.getElementById('txt-pass').value;
             if(!email || !pass) { showError("يرجى إدخال البريد وكلمة المرور"); return; }
             hideError(); setLoading(true);
-            log(`محاولة تسجيل: ${email}`, 'info');
+            log(`Register attempt: ${email}`, 'info');
             callNative('registerUser', JSON.stringify({email: email, pass: pass})); 
         }
         
@@ -266,7 +260,7 @@
         // === Callbacks ===
         window.onAuthSuccess = function(code){ 
             resetButtons();
-            log('نجاح المصادقة. الكود: ' + code, 'success');
+            log('Auth Success. Code: ' + code, 'success');
             showScreen('screen-binding'); 
             if(code && code.length === 9) {
                 document.getElementById('display-code').innerText = code.substring(0,3) + " " + code.substring(3,6) + " " + code.substring(6);
@@ -276,13 +270,13 @@
 
         window.onAuthError = function(msg){ 
             resetButtons();
-            log('خطأ من Kotlin: ' + msg, 'error');
-            if(msg.includes('10') || msg.includes('ApiException')) { showError('خطأ في شهادة التطبيق (SHA-1).'); } else { showError(msg); }
+            log('Auth Error: ' + msg, 'error');
+            if(msg.includes('10') || msg.includes('ApiException')) { showError('SHA-1 Error'); } else { showError(msg); }
         };
 
         window.onChildLinked = function(configJson){
             resetButtons();
-            log('تم استقبال بيانات الربط!', 'success');
+            log('Child Linked!', 'success');
             try {
                 currentConfig = JSON.parse(configJson);
                 log(`Parent ID: ${currentConfig.parentId}`, 'info');
@@ -290,33 +284,35 @@
                 document.getElementById('profile-email').innerText = currentConfig.email || '';
                 showScreen('screen-main');
                 startDashboardListeners();
-            } catch(e) { log('خطأ في تحليل JSON: ' + e.message, 'error'); }
+            } catch(e) { log('JSON Parse Error: ' + e.message, 'error'); }
         };
 
         window.showLoginScreen = function(){ 
             resetButtons(); 
-            log('Kotlin يطلب تسجيل الدخول.', 'info');
+            log('Show Login Screen.', 'info');
             showScreen('screen-login'); 
         };
 
-        // === Dashboard Logic ===
+        // === Dashboard Logic (FIXED: Used .doc() instead of .document()) ===
         function startDashboardListeners() {
-            if(!currentConfig.parentId) { log('لا يوجد Parent ID!', 'error'); return; }
+            if(!currentConfig.parentId) { log('Error: Parent ID is null!', 'error'); return; }
             
-            log('بدء الاستماع لتحديثات Firebase...', 'info');
-            const ref = db.collection('parents').document(currentConfig.parentId)
-                           .collection('children').document(currentConfig.deviceId);
+            log('Connecting to Firestore...', 'info');
+            
+            // Correction applied here: .doc() instead of .document()
+            const ref = db.collection('parents').doc(currentConfig.parentId)
+                           .collection('children').doc(currentConfig.deviceId);
 
             ref.onSnapshot(doc => {
                 if(doc.exists){
-                    log('✅ تم استقبال تحديث للبيانات!', 'success');
+                    log('Data Updated!', 'success');
                     const data = doc.data();
                     updateUI(data);
                 } else {
-                    log('❌ المستند غير موجود في Firebase!', 'error');
+                    log('Document does NOT exist!', 'error');
                 }
             }, error => {
-                log('❌ خطأ Firebase: ' + error.message, 'error');
+                log('Firestore Error: ' + error.message, 'error');
             });
         }
 
@@ -344,9 +340,9 @@
                 const newLatLng = [lat, lng];
                 marker.setLatLng(newLatLng);
                 map.setView(newLatLng, 15);
-                document.getElementById('location-address').innerText = "تم تحديث الموقع";
+                document.getElementById('location-address').innerText = "تم التحديث";
                 document.getElementById('location-time').innerText = new Date().toLocaleTimeString('ar');
-                log(`تحديث الموقع: ${lat}, ${lng}`, 'success');
+                log(`Location Updated: ${lat}, ${lng}`, 'success');
             }
         }
         function centerMap(){ if(marker) map.setView(marker.getLatLng(), 16); }
@@ -356,16 +352,17 @@
             const list = document.getElementById('logs-list');
             list.innerHTML = '<p class="text-center text-gray-400">جاري التحميل...</p>';
             
-            db.collection('parents').document(currentConfig.parentId)
-              .collection('children').document(currentConfig.deviceId)
+            // Correction applied here: .doc() instead of .document()
+            db.collection('parents').doc(currentConfig.parentId)
+              .collection('children').doc(currentConfig.deviceId)
               .collection(collection).orderBy('timestamp', 'desc').limit(50).get().then(snap => {
-                  if(snap.empty){ list.innerHTML = '<p class="text-center text-gray-500">لا توجد بيانات</p>'; log(`⚠️ ${collection}: لا توجد بيانات.`, 'info'); return; }
+                  if(snap.empty){ list.innerHTML = '<p class="text-center text-gray-500">لا توجد بيانات</p>'; log(`No data in ${collection}`, 'info'); return; }
                   list.innerHTML = '';
                   snap.forEach(doc => { list.appendChild(createLogItem(doc.data())); });
-                  log(`✅ ${collection}: تم تحميل ${snap.size} سجل.`, 'success');
+                  log(`Loaded ${snap.size} from ${collection}`, 'success');
               }).catch(err => {
                   list.innerHTML = '<p class="text-center text-red-500">خطأ</p>';
-                  log(`❌ خطأ تحميل ${collection}: ${err.message}`, 'error');
+                  log(`Error loading ${collection}: ${err.message}`, 'error');
               });
         }
 
